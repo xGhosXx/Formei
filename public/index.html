@@ -1656,7 +1656,24 @@
     }
     .db-card-menu-item:hover { background: var(--bg-surface-2); color: white; }
     .db-card-menu-item.danger { color: var(--red); }
-    .db-card-menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); }
+    .db-badge-trash { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+    .db-nav-sub { margin-left: 32px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+    .db-nav-folder {
+      padding: 6px 12px; border-radius: 6px; font-size: 13px; color: #a1a1aa; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; transition: 0.2s;
+    }
+    .db-nav-folder:hover { background: rgba(255,255,255,0.05); color: white; }
+    .db-nav-folder.active { background: rgba(124,58,237,0.1); color: var(--accent-light); font-weight: 500; }
+    .folder-delete-btn { opacity: 0; transition: 0.2s; padding: 4px; border-radius: 4px; color: #ef4444; }
+    .db-nav-folder:hover .folder-delete-btn { opacity: 1; }
+    .folder-delete-btn:hover { background: rgba(239, 68, 68, 0.1); }
+
+    .db-card-folder-badge {
+      display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-muted);
+      margin-top: 4px; padding: 2px 6px; background: rgba(255,255,255,0.03); border-radius: 4px;
+      width: fit-content;
+    }
     .settings-header-actions { display: flex; gap: 4px; }
     
     .settings-tabs {
@@ -2645,6 +2662,27 @@
     .db-card-responses b { color: white; font-weight: 600; margin-left: 2px;}
     .db-card-menu-btn { background: transparent; border: none; color: #a1a1aa; cursor: pointer; display:flex; padding: 4px; border-radius: 4px; transition:0.2s; }
     .db-card-menu-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+    
+    .form-status-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 8px; display:inline-block; }
+    .form-status-badge.draft { background: rgba(255,255,255,0.1); color: #a1a1aa; }
+    .form-status-badge.published { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+
+    /* LIST CARDS */
+    .forms-list { display: flex; flex-direction: column; gap: 8px; }
+    .db-list-item {
+      background: #18181c; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; overflow: hidden; cursor: pointer;
+      animation: dbFadeInUp 0.4s ease backwards; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255,255,255,0.04); padding: 12px 16px;
+    }
+    .db-list-item:hover { background: #1d1d22; transform: translateY(-1px); border-color: rgba(255,255,255,0.1); }
+    .db-list-item .list-left { display: flex; align-items: center; gap: 16px; }
+    .db-list-item .list-emoji { font-size: 24px; }
+    .db-list-item .list-title-wrap { display: flex; flex-direction: column; }
+    .db-list-item .list-title { font-size: 14px; font-weight: 500; color: #e4e4e7; }
+    .db-list-item .list-meta { font-size: 12px; color: #a1a1aa; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
+    .db-list-item .list-right { display: flex; align-items: center; gap: 24px; }
+    .db-list-item .list-responses { font-size: 13px; color: #a1a1aa; display: flex; align-items: center; gap: 6px; }
+    .db-list-item .list-responses b { color: white; font-weight: 600; }
 
     @keyframes dbFadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -2836,11 +2874,11 @@
           </form>
           <div class="auth-divider">ou continue com</div>
           <div class="auth-social-btns">
-            <button class="auth-social-btn" onclick="showToast('Login social em breve!', 'info')">
+            <button class="auth-social-btn" onclick="loginWithSocial('google')">
               <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
               Google
             </button>
-            <button class="auth-social-btn" onclick="showToast('Login social em breve!', 'info')">
+            <button class="auth-social-btn" onclick="loginWithSocial('github')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
               GitHub
             </button>
@@ -2926,11 +2964,11 @@
           </form>
           <div class="auth-divider">ou continue com</div>
           <div class="auth-social-btns">
-            <button class="auth-social-btn" onclick="showToast('Login social em breve!', 'info')">
+            <button class="auth-social-btn" onclick="loginWithSocial('google')">
               <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
               Google
             </button>
-            <button class="auth-social-btn" onclick="showToast('Login social em breve!', 'info')">
+            <button class="auth-social-btn" onclick="loginWithSocial('github')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
               GitHub
             </button>
@@ -2999,12 +3037,14 @@
               </div>
               <span class="db-nav-badge" id="nav-forms-count">0</span>
             </li>
-            <li class="db-nav-item" onclick="showToast('Em breve', 'info')">
+            <li class="db-nav-item" onclick="createFolder()">
               <div class="db-nav-left">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                 <span>Criar uma nova pasta</span>
               </div>
             </li>
+            
+            <div id="folders-list" class="db-nav-sub"></div>
 
             <div class="db-nav-divider"></div>
 
@@ -3193,9 +3233,10 @@
           <button class="btn-copy mt-16" onclick="copyEmbed()" style="width:100%; margin-top: 12px;">Copiar código</button>
         </div>
         <div id="share-qr" class="share-content" style="text-align: center;">
-          <div class="qr-placeholder">
-            <div class="qr-grid" id="qr-grid"></div>
+          <div style="background:var(--bg-surface-2); padding:20px; border-radius: var(--radius-lg); display:inline-block;">
+            <img id="qr-image" src="" alt="QR Code" style="width:200px; height:200px; border-radius:var(--radius-sm); filter: invert(0.8);" />
           </div>
+
           <p class="text-sm text-muted mt-16" style="margin-top: 16px;">Escaneie para abrir o formulário</p>
         </div>
       </div>
@@ -3282,6 +3323,7 @@
             <svg class="mobile-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9"></path></svg>
             <svg class="desktop-text" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
           </button>
+          <span id="save-status" style="font-size:12px; color:var(--text-muted); margin-right:8px; opacity:0; transition:0.3s; font-weight:500;">Salvo na nuvem</span>
           <button class="btn-primary-sm" onclick="publishForm()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
             <span class="desktop-text">Salvar</span>
@@ -3869,6 +3911,8 @@
       responses: {},
       notifications: [],
       currentNav: 'forms',
+      folders: [],
+      currentFolderId: null,
       unreadCount: 0,
       conditionalRules: [],
       webhookUrl: '',
@@ -4002,6 +4046,19 @@
       document.querySelectorAll('.db-nav-item').forEach(n => n.classList.remove('active'));
       if (el) el.classList.add('active');
       state.currentNav = type;
+      state.currentFolderId = null; // Clear folder filter when switching main nav
+      renderFoldersUI();
+      renderDashboard();
+    }
+
+    function setViewMode(mode) {
+      state.viewMode = mode;
+      document.querySelectorAll('.db-icon-btn-group').forEach(b => b.classList.remove('active'));
+      if (mode === 'list') {
+        document.getElementById('list-view-btn')?.classList.add('active');
+      } else {
+        document.getElementById('grid-view-btn')?.classList.add('active');
+      }
       renderDashboard();
     }
 
@@ -4879,7 +4936,41 @@
       }
     }
 
-    // ==================== CANVAS RENDER ====================
+    // ==================== CANVAS RENDER & AUTOSAVE ====================
+    let autoSaveTimer = null;
+
+    async function saveDraftSilently() {
+      if (!supabaseClient || !state.currentFormId || typeof state.currentFormId !== 'number') return;
+      
+      const statEl = document.getElementById('save-status');
+      if (statEl) { statEl.textContent = 'Salvando...'; statEl.style.opacity = '1'; }
+
+      const title = document.getElementById('builder-form-title').value || 'Formulário sem título';
+      const desc = document.getElementById('canvas-form-desc').value || '';
+      try {
+        await supabaseClient.from('forms').update({ 
+          title, description: desc, fields: state.fields, 
+          conditional_rules: state.conditionalRules,
+          theme_color: JSON.stringify(state.formDesign),
+          updated_at: new Date().toISOString() 
+        }).eq('id', state.currentFormId);
+        
+        if (statEl) {
+          statEl.textContent = 'Salvo na nuvem';
+          setTimeout(() => { statEl.style.opacity = '0'; }, 2000);
+        }
+      } catch (err) {
+        if (statEl) { statEl.textContent = 'Erro ao salvar'; statEl.style.color = '#ef4444'; }
+      }
+    }
+
+    function triggerAutoSave() {
+      if (autoSaveTimer) clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => {
+        saveDraftSilently();
+      }, 1500);
+    }
+
     function renderCanvas() {
       const container = document.getElementById('canvas-fields');
       const placeholder = document.getElementById('canvas-placeholder');
@@ -4949,6 +5040,8 @@
         `;
         container.appendChild(item);
       });
+      
+      triggerAutoSave();
     }
 
 
@@ -5218,14 +5311,15 @@
       }
 
       const fields = form.fields || [];
-      const tableHeaders = fields.slice(0, 5).map(f => `<th>${(f.label || 'Campo').slice(0, 25)}</th>`).join('');
+      const tableHeaders = fields.slice(0, 5).map(f => `<th title="${f.label}">${(f.label || 'Campo').length > 25 ? (f.label || 'Campo').slice(0, 25) + '...' : (f.label || 'Campo')}</th>`).join('');
       
       const tableRows = responses.map(r => {
         const d = r.data || {};
         const cells = fields.slice(0, 5).map(f => {
           let val = d[f.id] || '—';
           if (Array.isArray(val)) val = val.join(', ');
-          return `<td>${String(val).slice(0, 40)}</td>`;
+          const displayVal = String(val).length > 40 ? String(val).slice(0, 40) + '...' : String(val);
+          return `<td title="${String(val)}">${displayVal}</td>`;
         }).join('');
         const date = new Date(r.submitted_at || r.submittedAt).toLocaleString('pt-BR');
         return `<tr>${cells}<td style="color:var(--text-muted)">${date}</td></tr>`;
@@ -5281,17 +5375,12 @@
     }
 
     function generateQR() {
-      const grid = document.getElementById('qr-grid');
-      if (!grid) return;
-      const pattern = [];
-      for (let i = 0; i < 49; i++) {
-        const row = Math.floor(i / 7);
-        const col = i % 7;
-        const isCorner = (row < 3 && col < 3) || (row < 3 && col > 3) || (row > 3 && col < 3);
-        const isDark = isCorner || Math.random() > 0.5;
-        pattern.push(isDark);
+      const formId = state.currentFormId || (state.forms.length > 0 ? state.forms[0].id : '');
+      const link = window.location.origin + '/form/' + formId;
+      const qrImg = document.getElementById('qr-image');
+      if (qrImg) {
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(link)}`;
       }
-      grid.innerHTML = pattern.map(dark => `<div class="qr-cell ${dark ? 'dark' : 'light'}"></div>`).join('');
     }
 
     // ==================== NOTIFICATIONS ====================
@@ -5462,9 +5551,10 @@
         if (listContainer) listContainer.style.display = 'none';
         if (empty) {
           empty.style.display = 'flex';
+          const folder = state.folders.find(f => f.id === state.currentFolderId);
           empty.querySelector('.empty-text').textContent = state.currentNav === 'trash' 
             ? 'Lixeira vazia' 
-            : (searchQuery ? 'Nenhum formulário encontrado' : 'Nenhum formulário criado');
+            : (searchQuery ? 'Nenhum formulário encontrado' : (folder ? `Nenhum formulário na pasta "${folder.name}"` : 'Nenhum formulário criado'));
         }
         if (statsRow) statsRow.style.display = activeForms.length > 0 ? 'flex' : 'none';
         return;
@@ -5473,6 +5563,49 @@
       if (statsRow) statsRow.style.display = 'flex';
       if (empty) empty.style.display = 'none';
 
+      const getMenuHtml = (form) => `
+        <div id="menu-${form.id}" class="db-card-menu">
+          ${state.currentNav === 'trash' ? `
+            <div class="db-card-menu-item" onclick="event.stopPropagation(); restoreForm('${form.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              Restaurar
+            </div>
+            <div class="db-card-menu-item danger" onclick="event.stopPropagation(); deleteForm('${form.id}', event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Excluir Permanente
+            </div>
+          ` : `
+            <div class="db-card-menu-item" onclick="event.stopPropagation(); editForm('${form.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              Editar
+            </div>
+            <div class="db-card-menu-item" onclick="event.stopPropagation(); viewResponses('${form.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              Respostas
+            </div>
+            <div class="db-card-menu-item" onclick="event.stopPropagation(); duplicateForm('${form.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              Duplicar
+            </div>
+            <div class="db-card-menu-item" onclick="event.stopPropagation(); promptMoveToFolder('${form.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              Mover para pasta
+            </div>
+            <div class="db-card-menu-item danger" onclick="event.stopPropagation(); deleteForm('${form.id}', event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Excluir
+            </div>
+          `}
+        </div>
+      `;
+
+      const getStatusBadge = (status) => {
+        if (state.currentNav === 'trash') return '';
+        return status === 'published' 
+          ? `<span class="form-status-badge published">Publicado</span>`
+          : `<span class="form-status-badge draft">Rascunho</span>`;
+      };
+
       if (state.viewMode === 'grid') {
         if (gridContainer) {
           gridContainer.style.display = 'grid';
@@ -5480,49 +5613,61 @@
             <div class="db-form-card" style="animation-delay: ${i * 0.05}s" onclick="editForm('${form.id}')">
               <div class="db-card-top">
                 <span class="db-card-emoji">${form.emoji || '📋'}</span>
+                ${getStatusBadge(form.status)}
               </div>
               <div class="db-card-body">
                 <div class="db-card-title">${form.title}</div>
               </div>
               <div class="db-card-footer">
-                <div class="db-card-responses">Respostas: <b>${form.responseCount || 0}</b></div>
-                <button class="db-card-menu-btn" onclick="event.stopPropagation(); toggleCardMenu('${form.id}')">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                </button>
-                <div id="menu-${form.id}" class="db-card-menu">
-                  ${state.currentNav === 'trash' ? `
-                    <div class="db-card-menu-item" onclick="event.stopPropagation(); restoreForm('${form.id}')">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                      Restaurar
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <div class="db-card-responses">Respostas: <b>${form.responseCount || 0}</b></div>
+                  ${form.folder_id ? `
+                    <div class="db-card-folder-badge">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                      ${state.folders.find(fd => fd.id === form.folder_id)?.name || 'Pasta'}
                     </div>
-                    <div class="db-card-menu-item danger" onclick="event.stopPropagation(); deleteForm('${form.id}', event)">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                      Excluir Permanente
-                    </div>
-                  ` : `
-                    <div class="db-card-menu-item" onclick="event.stopPropagation(); editForm('${form.id}')">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                      Editar
-                    </div>
-                    <div class="db-card-menu-item" onclick="event.stopPropagation(); viewResponses('${form.id}')">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                      Respostas
-                    </div>
-                    <div class="db-card-menu-item" onclick="event.stopPropagation(); duplicateForm('${form.id}')">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                      Duplicar
-                    </div>
-                    <div class="db-card-menu-item danger" onclick="event.stopPropagation(); deleteForm('${form.id}', event)">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                      Excluir
-                    </div>
-                  `}
+                  ` : ''}
+                </div>
+                <div style="position:relative;">
+                  <button class="db-card-menu-btn" onclick="event.stopPropagation(); toggleCardMenu('${form.id}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                  </button>
+                  ${getMenuHtml(form)}
                 </div>
               </div>
             </div>
           `).join('');
         }
         if (listContainer) listContainer.style.display = 'none';
+      } else {
+        // VIEW: LIST
+        if (listContainer) {
+          listContainer.style.display = 'flex';
+          listContainer.innerHTML = filteredForms.map((form, i) => `
+            <div class="db-list-item" style="animation-delay: ${i * 0.05}s" onclick="editForm('${form.id}')">
+              <div class="list-left">
+                <div class="list-emoji">${form.emoji || '📋'}</div>
+                <div class="list-title-wrap">
+                  <div class="list-title">${form.title}</div>
+                  <div class="list-meta">
+                    Atualizado em ${form.updatedAt} ${getStatusBadge(form.status)}
+                    ${form.folder_id ? `<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);opacity:0.8;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> ${state.folders.find(fd => fd.id === form.folder_id)?.name || 'Pasta'}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="list-right">
+                <div class="list-responses">Respostas: <b>${form.responseCount || 0}</b></div>
+                <div style="position:relative;">
+                  <button class="db-card-menu-btn" onclick="event.stopPropagation(); toggleCardMenu('${form.id}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                  </button>
+                  ${getMenuHtml(form)}
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+        if (gridContainer) gridContainer.style.display = 'none';
       }
     }
 
@@ -5588,6 +5733,22 @@
       btn.innerHTML = isPassword
         ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>'
         : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    }
+
+    // ==================== AUTH ACTIONS ====================
+    async function loginWithSocial(provider) {
+      if (!supabaseClient) return showToast('Supabase não configurado!', 'error');
+      try {
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+          provider: provider,
+          options: {
+            redirectTo: window.location.origin
+          }
+        });
+        if (error) throw error;
+      } catch (err) {
+        showToast('Erro: ' + err.message, 'error');
+      }
     }
 
     // ==================== LOGIN ====================
@@ -5778,6 +5939,105 @@
       } catch (err) {
         console.error('Error loading forms:', err);
         showToast('Erro ao carregar formulários', 'error');
+      }
+    }
+
+    async function loadFolders() {
+      if (!supabaseClient) return;
+      try {
+        const { data: folders, error } = await supabaseClient
+          .from('folders')
+          .select('*')
+          .order('name');
+        if (error) throw error;
+        state.folders = folders || [];
+        renderFoldersUI();
+      } catch (err) {
+        console.error('Error loading folders:', err);
+      }
+    }
+
+    async function createFolder() {
+      const name = prompt('Nome da nova pasta:');
+      if (!name) return;
+      if (!supabaseClient) return showToast('Supabase não configurado!', 'error');
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { error } = await supabaseClient.from('folders').insert({
+          user_id: user.id,
+          name: name
+        });
+        if (error) throw error;
+        showToast('Pasta criada! 📁', 'success');
+        await loadFolders();
+      } catch (err) {
+        showToast('Erro ao criar pasta: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteFolder(id) {
+      if (!confirm('Tem certeza que deseja excluir esta pasta? Os formulários não serão excluídos.')) return;
+      try {
+        const { error } = await supabaseClient.from('folders').delete().eq('id', id);
+        if (error) throw error;
+        if (state.currentFolderId === id) state.currentFolderId = null;
+        showToast('Pasta excluída', 'success');
+        await loadFolders();
+      } catch (err) {
+        showToast('Erro ao excluir pasta', 'error');
+      }
+    }
+
+    function renderFoldersUI() {
+      const container = document.getElementById('folders-list');
+      if (!container) return;
+      
+      container.innerHTML = state.folders.map(folder => `
+        <div class="db-nav-folder ${state.currentFolderId === folder.id ? 'active' : ''}" onclick="switchFolder(${folder.id})">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span>${folder.emoji || '📁'}</span>
+            <span>${folder.name}</span>
+          </div>
+          <div class="folder-delete-btn" onclick="event.stopPropagation(); deleteFolder(${folder.id})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function switchFolder(id) {
+      state.currentFolderId = id;
+      state.currentNav = 'forms';
+      
+      // Update sidebar visual
+      document.querySelectorAll('.db-nav-item').forEach(n => n.classList.remove('active'));
+      const activeItem = document.querySelector(`.db-nav-item[data-nav="forms"]`);
+      if (activeItem) activeItem.classList.add('active');
+      
+      renderFoldersUI();
+      renderDashboard();
+    }
+
+    async function promptMoveToFolder(formId) {
+      if (state.folders.length === 0) return showToast('Você não tem pastas criadas.', 'info');
+      
+      const folderOptions = state.folders.map(f => `${f.id}: ${f.name}`).join('\n');
+      const input = prompt(`Digite o ID da pasta para mover o formulário:\n\n0: (Raiz - Sem pasta)\n${folderOptions}`);
+      
+      if (input === null) return;
+      const folderId = input === '0' ? null : parseInt(input);
+      
+      try {
+        const { error } = await supabaseClient
+          .from('forms')
+          .update({ folder_id: folderId })
+          .eq('id', formId);
+        
+        if (error) throw error;
+        showToast('Formulário movido com sucesso!', 'success');
+        await loadFormsFromAPI();
+      } catch (err) {
+        showToast('Erro ao mover formulário', 'error');
       }
     }
 

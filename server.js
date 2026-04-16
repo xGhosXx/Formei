@@ -660,24 +660,54 @@ app.post('/api/public/forms/:id/responses', async (req, res) => {
   const id = req.params.id;
   const { data } = req.body;
 
+  let webhookUrl = null;
+  let formTitle = '';
+
   if (!supabase) {
     const db = loadDB();
     const form = db.forms.find(f => f.id === parseInt(id) && f.status === 'published');
     if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
+    webhookUrl = form.webhook_url;
+    formTitle = form.title;
+    
     const response = { id: genId(db), form_id: parseInt(id), data: data || {}, submitted_at: new Date().toISOString() };
     db.responses.push(response);
     db.notifications.push({ id: genId(db), user_id: form.user_id, type: 'new_response', form_id: form.id, form_title: form.title, message: `Nova resposta no formulário "${form.title}"`, read: false, created_at: new Date().toISOString() });
     saveDB(db);
-    return res.status(201).json({ success: true });
+  } else {
+    // Fetch form first to get webhook URL
+    const { data: form, error: formError } = await supabase.from('forms').select('webhook_url, title').eq('id', id).single();
+    if (!formError && form) {
+      webhookUrl = form.webhook_url;
+      formTitle = form.title;
+    }
+
+    const { data: respData, error } = await supabase
+      .from('responses')
+      .insert([{ form_id: id, data: data || {} }])
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
   }
 
-  const { error } = await supabase
-    .from('responses')
-    .insert([{ form_id: id, data: data || {} }]);
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  // Notification is handled by DB trigger in SQL schema
+  // Trigger Webhook if configured
+  if (webhookUrl && webhookUrl.startsWith('http')) {
+    const payload = {
+      event: 'new_response',
+      form_id: id,
+      form_title: formTitle,
+      data: data || {},
+      submitted_at: new Date().toISOString()
+    };
+    
+    // Non-blocking trigger
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(err => console.error('Webhook Error:', err.message));
+  }
 
   res.status(201).json({ success: true });
 });

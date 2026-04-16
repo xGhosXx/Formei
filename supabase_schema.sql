@@ -25,11 +25,21 @@ CREATE TABLE IF NOT EXISTS forms (
   webhook_url TEXT DEFAULT '',
   conditional_rules JSONB DEFAULT '[]'::jsonb,
   views INTEGER DEFAULT 0,
+  folder_id BIGINT REFERENCES folders(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 3. RESPONSES
+-- 3. FOLDERS
+CREATE TABLE IF NOT EXISTS folders (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  emoji TEXT DEFAULT '📁',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 4. RESPONSES
 CREATE TABLE IF NOT EXISTS responses (
   id BIGSERIAL PRIMARY KEY,
   form_id BIGINT NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
@@ -53,6 +63,8 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- INDEXES
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_forms_user_id ON forms(user_id);
+CREATE INDEX IF NOT EXISTS idx_forms_folder_id ON forms(folder_id);
+CREATE INDEX IF NOT EXISTS idx_folders_user_id ON folders(user_id);
 CREATE INDEX IF NOT EXISTS idx_responses_form_id ON responses(form_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_forms_status ON forms(status);
@@ -63,6 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_forms_status ON forms(status);
 
 -- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE folders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE forms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
@@ -79,6 +92,23 @@ CREATE POLICY "Users can update own profile"
 CREATE POLICY "Users can insert own profile"
   ON profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
+
+-- FOLDERS policies
+CREATE POLICY "Users can view own folders"
+  ON folders FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create folders"
+  ON folders FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own folders"
+  ON folders FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own folders"
+  ON folders FOR DELETE
+  USING (auth.uid() = user_id);
 
 -- FORMS policies
 CREATE POLICY "Users can view own forms"

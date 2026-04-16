@@ -7,6 +7,7 @@
   <meta name="description" content="Preencha este formulário criado com o Formei">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     :root {
       --accent: #7c3aed;
@@ -18,23 +19,39 @@
       --text: #fafafa;
       --text-muted: #71717a;
       --text-secondary: #d4d4d8;
+      --label-color: #d4d4d8;
       --green: #10b981;
       --red: #ef4444;
       --radius: 10px;
+      --card-radius: 16px;
+      --card-border: 1px solid rgba(255,255,255,0.08);
+      --card-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      --font-family: 'Inter', system-ui, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: var(--font-family);
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 40px 20px;
+      flex-direction: column;
+      align-items: center;
+      padding: 0;
       min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Cover Image */
+    .form-cover {
+      width: 100%;
+      height: 240px;
+      background-size: cover;
+      background-position: center;
+      display: none;
+      margin-bottom: -60px;
     }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -44,7 +61,19 @@
     .form-wrapper {
       width: 100%;
       max-width: 640px;
+      padding: 40px 20px;
       animation: fadeIn 0.5s ease;
+      position: relative;
+      z-index: 2;
+    }
+
+    .form-logo {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      margin: 0 auto 20px auto;
+      display: none;
+      border-radius: 12px;
     }
 
     .form-header {
@@ -65,10 +94,10 @@
 
     .form-card {
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      border: var(--card-border);
+      border-radius: var(--card-radius);
       padding: 36px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      box-shadow: var(--card-shadow);
     }
 
     .form-field {
@@ -252,24 +281,90 @@
       animation: spin 0.6s linear infinite;
     }
 
-    /* Success */
+    /* Input Styles Variations */
+    .field-input.style-underline {
+      border: none !important;
+      border-bottom: 2px solid var(--border) !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      padding-left: 0; padding-right: 0;
+    }
+    .field-input.style-underline:focus {
+      border-bottom-color: var(--accent) !important;
+      box-shadow: none !important;
+    }
+    .field-input.style-filled {
+      border-color: transparent !important; opacity: 0.9;
+    }
+
+    /* Button Variants */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-style-filled {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+    }
+    .btn-style-filled:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-style-outlined {
+      background: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+    }
+    .btn-style-outlined:hover { background: var(--accent); color: white; }
+
+    /* Success Screen Premium */
     .success-screen {
       display: none;
       text-align: center;
       padding: 60px 40px;
-      animation: scaleIn 0.5s ease;
+      animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .success-screen.active { display: block; }
-    .success-icon {
-      width: 80px; height: 80px;
+    .success-screen.active { display: flex; flex-direction: column; align-items: center; }
+    .success-icon-wrap {
+      width: 100px; height: 100px;
+      position: relative;
+      margin-bottom: 32px;
+    }
+    .success-icon-bg {
+      position: absolute; inset: 0;
+      background: var(--accent);
+      opacity: 0.15;
       border-radius: 50%;
-      background: rgba(16,185,129,0.15);
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 24px;
-      font-size: 36px;
+      animation: pulse 2s infinite;
     }
-    .success-screen h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-    .success-screen p { color: var(--text-muted); font-size: 15px; }
+    @keyframes pulse { 0% { transform: scale(1); opacity: 0.15; } 50% { transform: scale(1.2); opacity: 0.05; } 100% { transform: scale(1); opacity: 0.15; } }
+    .success-icon {
+      position: absolute; inset: 15px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      font-size: 40px;
+      box-shadow: 0 8px 16px rgba(124,58,237,0.3);
+    }
+    .success-screen h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.02em; }
+    .success-screen p { color: var(--text-muted); font-size: 16px; margin-bottom: 32px; max-width: 320px; line-height: 1.6; }
+    
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
 
     /* Error */
     .error-screen {
@@ -320,43 +415,50 @@
 </head>
 <body>
 
-<div class="form-wrapper">
-  <!-- Loading -->
-  <div id="loading" class="form-card loading-screen">
-    <div class="loading-spinner"></div>
-    <p style="color: var(--text-muted)">Carregando formulário...</p>
-  </div>
+  <div class="form-cover" id="cover-img"></div>
 
-  <!-- Error -->
-  <div id="error-screen" class="form-card error-screen">
-    <div class="error-icon">😔</div>
-    <h2>Formulário não encontrado</h2>
-    <p>Este formulário não existe ou não está publicado.</p>
-  </div>
+  <div class="form-wrapper">
+    <img src="" alt="Logo" class="form-logo" id="form-logo">
+    
+    <!-- Loading -->
+    <div id="loading" class="form-card loading-screen">
+      <div class="loading-spinner"></div>
+      <p style="color: var(--text-muted)">Carregando formulário...</p>
+    </div>
 
-  <!-- Form -->
-  <div id="form-container" style="display:none">
-    <div class="form-header">
-      <h1 id="form-title"></h1>
-      <p id="form-desc"></p>
+    <!-- Error -->
+    <div id="error-screen" class="form-card error-screen">
+      <div class="error-icon">😔</div>
+      <h2>Formulário não encontrado</h2>
+      <p>Este formulário não existe ou não está publicado.</p>
     </div>
-    <div class="form-card">
-      <div id="fields-container"></div>
-      <button class="submit-btn" id="submit-btn" onclick="submitForm()">Enviar resposta</button>
-    </div>
-    <div class="branding">
-      Criado com <a href="/">Formei</a> ✨
-    </div>
-  </div>
 
-  <!-- Success -->
-  <div id="success-screen" class="form-card success-screen">
-    <div class="success-icon">✅</div>
-    <h2>Resposta enviada!</h2>
-    <p>Obrigado por preencher o formulário.</p>
-    <button class="submit-btn" style="margin-top:24px; max-width:200px; margin-left:auto; margin-right:auto;" onclick="location.reload()">Enviar outra resposta</button>
+    <!-- Form Container -->
+    <div id="form-container" style="display:none">
+      <div class="form-header">
+        <h1 id="form-title"></h1>
+        <p id="form-desc"></p>
+      </div>
+      <div class="form-card">
+        <div id="fields-container"></div>
+        <button class="submit-btn btn-style-filled" id="submit-btn" onclick="submitForm()">Enviar resposta</button>
+      </div>
+      <div class="branding">
+        Criado com <a href="/">Formei</a> ✨
+      </div>
+    </div>
+
+    <!-- Success Screen Premium -->
+    <div id="success-screen" class="form-card success-screen">
+      <div class="success-icon-wrap">
+        <div class="success-icon-bg"></div>
+        <div class="success-icon">✓</div>
+      </div>
+      <h2>Tudo pronto!</h2>
+      <p>Sua resposta foi enviada com sucesso. Obrigado por participar!</p>
+      <button class="btn-secondary" onclick="window.location.reload()">Enviar outra resposta</button>
+    </div>
   </div>
-</div>
 
 <script>
   // Supabase config - same as in index.html
@@ -407,103 +509,52 @@
 
       if (design) {
         const color = design.primaryColor || '#7c3aed';
-        document.documentElement.style.setProperty('--accent', color);
-        document.documentElement.style.setProperty('--accent-light', adjustColor(color, 20));
-        document.documentElement.style.setProperty('--bg', design.bgColor || '#09090b');
-        document.documentElement.style.setProperty('--bg-card', design.cardBg || '#0f0f12');
-        document.documentElement.style.setProperty('--bg-input', design.inputBg || '#16161a');
-        document.documentElement.style.setProperty('--border', design.inputBorder || 'rgba(255,255,255,0.08)');
-        document.documentElement.style.setProperty('--text', design.textColor || '#fafafa');
-        document.documentElement.style.setProperty('--text-secondary', design.labelColor || '#d4d4d8');
-        document.documentElement.style.setProperty('--radius', (design.borderRadius || '10') + 'px');
+        const root = document.documentElement;
+        root.style.setProperty('--accent', color);
+        root.style.setProperty('--accent-light', adjustColor(color, 20));
+        root.style.setProperty('--bg', design.bgColor || '#09090b');
+        root.style.setProperty('--bg-card', design.cardBg || '#0f0f12');
+        root.style.setProperty('--bg-input', design.inputBg || '#16161a');
+        root.style.setProperty('--border', design.inputBorder || 'rgba(255,255,255,0.08)');
+        root.style.setProperty('--text', design.textColor || '#fafafa');
+        root.style.setProperty('--label-color', design.labelColor || '#d4d4d8');
+        root.style.setProperty('--radius', (design.borderRadius || '10') + 'px');
+        root.style.setProperty('--card-radius', (design.cardRadius || design.borderRadius || '16') + 'px');
+        root.style.setProperty('--font-family', design.fontFamily ? `'${design.fontFamily}', system-ui, sans-serif` : "'Inter', system-ui, sans-serif");
 
-        // Font
+        // Font Dynamic Load
         if (design.fontFamily && design.fontFamily !== 'Inter') {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = `https://fonts.googleapis.com/css2?family=${design.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;
-          document.head.appendChild(link);
-          document.body.style.fontFamily = `'${design.fontFamily}', system-ui, sans-serif`;
-        }
-
-        if (design.fontSize) {
-          document.querySelectorAll('.field-input').forEach(el => el.style.fontSize = design.fontSize + 'px');
+          const l = document.createElement('link');
+          l.rel = 'stylesheet';
+          l.href = `https://fonts.googleapis.com/css2?family=${design.fontFamily.replace(/ /g, '+')}:wght@400;600;700&display=swap`;
+          document.head.appendChild(l);
         }
 
         // Background gradient
-        if (design.bgGradient) {
-          document.body.style.background = design.bgGradient;
+        if (design.bgGradient) document.body.style.background = design.bgGradient;
+
+        // Cover and Logo
+        const coverEl = document.getElementById('cover-img');
+        if (design.coverImage && coverEl) {
+          coverEl.style.backgroundImage = `url('${design.coverImage}')`;
+          coverEl.style.display = 'block';
         }
 
-        // Card styles
-        const card = document.querySelector('.form-card');
-        if (card) {
-          card.style.borderRadius = (design.borderRadius || 16) + 'px';
-          card.style.padding = (design.cardPadding || 36) + 'px';
-          if (!design.cardBorder) card.style.border = 'none';
-          if (!design.cardShadow) card.style.boxShadow = 'none';
+        const logoEl = document.getElementById('form-logo');
+        if (design.logo && logoEl) {
+          logoEl.src = design.logo;
+          logoEl.style.display = 'block';
         }
 
-        // Cover image
-        if (design.coverImage) {
-          const coverDiv = document.createElement('div');
-          coverDiv.style.cssText = `width:100%;height:160px;border-radius:${Math.max(0,(design.borderRadius||16)-8)}px;background:url('${design.coverImage}') center/cover;margin-bottom:20px;`;
-          const wrapper = document.querySelector('.form-wrapper');
-          if (wrapper) wrapper.insertBefore(coverDiv, wrapper.firstChild);
-        }
-
-        // Logo
-        if (design.logo) {
-          const logoImg = document.createElement('img');
-          logoImg.src = design.logo;
-          logoImg.style.cssText = 'max-width:120px;max-height:60px;margin:0 auto 16px;display:block;border-radius:8px;';
-          const header = document.querySelector('.form-header');
-          if (header) header.insertBefore(logoImg, header.firstChild);
-        }
-
-        // Button styles
+        // Button style
         const btn = document.getElementById('submit-btn');
         if (btn) {
-          btn.style.borderRadius = (design.buttonRadius || 10) + 'px';
-          if (design.buttonStyle === 'filled') {
-            btn.style.background = color;
-            btn.style.boxShadow = `0 4px 16px ${color}40`;
-          } else if (design.buttonStyle === 'outline') {
-            btn.style.background = 'transparent';
-            btn.style.border = `2px solid ${color}`;
-            btn.style.color = color;
-            btn.style.boxShadow = 'none';
-          } else if (design.buttonStyle === 'gradient') {
-            btn.style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -30)})`;
-            btn.style.boxShadow = `0 4px 16px ${color}40`;
-          } else if (design.buttonStyle === 'pill') {
-            btn.style.borderRadius = '50px';
-            btn.style.background = color;
-            btn.style.boxShadow = `0 4px 16px ${color}40`;
-          } else {
-            btn.style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -20)})`;
-            btn.style.boxShadow = `0 4px 16px ${color}40`;
-          }
-        }
-
-        // Input styles
-        if (design.inputStyle === 'underline') {
-          document.querySelectorAll('.field-input').forEach(el => {
-            el.style.border = 'none';
-            el.style.borderBottom = `2px solid ${design.inputBorder || 'rgba(255,255,255,0.08)'}`;
-            el.style.borderRadius = '0';
-          });
-        } else if (design.inputStyle === 'filled') {
-          document.querySelectorAll('.field-input').forEach(el => {
-            el.style.border = 'none';
-          });
+          btn.className = `submit-btn btn-style-${design.buttonStyle || 'filled'}`;
+          btn.style.borderRadius = (design.buttonRadius || design.borderRadius || 10) + 'px';
         }
       } else {
-        // Legacy: simple color string
         const color = formData.theme_color || '#7c3aed';
         document.documentElement.style.setProperty('--accent', color);
-        document.getElementById('submit-btn').style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -20)})`;
-        document.getElementById('submit-btn').style.boxShadow = `0 4px 16px ${color}40`;
       }
 
       document.getElementById('form-title').textContent = formData.title;
@@ -512,11 +563,12 @@
 
       renderFields();
 
-      // Apply input styles after fields are rendered (for design)
-      if (design) {
-        if (design.fontSize) {
-          document.querySelectorAll('.field-input').forEach(el => el.style.fontSize = design.fontSize + 'px');
-        }
+      // Input styles after render
+      if (design && design.inputStyle) {
+        document.querySelectorAll('.field-input').forEach(el => {
+          el.classList.add(`style-${design.inputStyle}`);
+        });
+      }
         if (design.inputStyle === 'underline') {
           document.querySelectorAll('.field-input').forEach(el => {
             el.style.border = 'none';
@@ -775,15 +827,29 @@
     btn.innerHTML = '<div class="spinner"></div> Enviando...';
 
     try {
-      const { error } = await supabaseClient.from('responses')
-        .insert({ form_id: parseInt(formId), data: formValues });
+      const resp = await fetch(`/api/public/forms/${formId}/responses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: formValues })
+      });
 
-      if (error) throw error;
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error || 'Erro no servidor');
+      }
+
+      // Success!
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: [getComputedStyle(document.documentElement).getPropertyValue('--accent'), '#ffffff']
+      });
 
       document.getElementById('form-container').style.display = 'none';
       document.getElementById('success-screen').classList.add('active');
-    } catch {
-      alert('Erro ao enviar resposta. Tente novamente.');
+    } catch (err) {
+      alert('Erro ao enviar resposta: ' + err.message);
       btn.disabled = false;
       btn.innerHTML = 'Enviar resposta';
     }

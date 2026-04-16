@@ -3731,9 +3731,7 @@
 
     function openShareModal() {
       const formId = state.currentFormId || (state.forms.length > 0 ? state.forms[0].id : '');
-      const linkUrl = new URL('form.html', window.location.href);
-      linkUrl.searchParams.set('id', formId);
-      const link = linkUrl.toString();
+      const link = window.location.origin + '/form/' + formId;
       const linkInput = document.getElementById('share-link-input');
       if (linkInput) linkInput.value = link;
       const embedEl = document.querySelector('.embed-code');

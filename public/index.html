@@ -979,6 +979,123 @@
       flex-direction: column;
       overflow-y: auto;
     }
+    /* Design Panel */
+    .design-panel { overflow-y: auto; }
+    .design-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .design-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .color-pick-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .color-input {
+      width: 36px;
+      height: 28px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 0;
+      background: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .color-input::-webkit-color-swatch-wrapper { padding: 2px; }
+    .color-input::-webkit-color-swatch { border: none; border-radius: 3px; }
+    .color-hex {
+      font-size: 12px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--text-muted);
+    }
+    .design-select {
+      background: var(--bg-surface-2);
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      width: 100%;
+      cursor: pointer;
+    }
+    .design-select:focus { border-color: var(--accent); outline: none; }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .design-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--bg-surface-4);
+      border-radius: 2px;
+      outline: none;
+    }
+    .design-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--bg-surface-1);
+      box-shadow: 0 0 6px rgba(124,58,237,0.4);
+    }
+    .slider-val {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* Theme Presets */
+    .theme-presets-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .theme-preset {
+      background: var(--bg-surface-2);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+    .theme-preset:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .theme-preset span { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+    .preset-preview {
+      width: 100%;
+      height: 36px;
+      border-radius: 6px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .preset-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
     .panel-section {
       padding: 16px;
       border-bottom: 1px solid var(--border-color);
@@ -1264,7 +1381,73 @@
       font-size: 14px;
     }
     .settings-header-actions { display: flex; gap: 4px; }
+    
+    .settings-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-surface-1);
+    }
+    .settings-tab {
+      flex: 1;
+      padding: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all var(--transition-fast);
+      border-bottom: 2px solid transparent;
+    }
+    .settings-tab:hover { color: var(--text-secondary); }
+    .settings-tab.active {
+      color: var(--accent-light);
+      border-bottom-color: var(--accent);
+      background: rgba(124,58,237,0.05);
+    }
+
     .settings-body { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+    
+    .rule-item {
+      background: var(--bg-surface-2);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rule-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .rule-summary {
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--text-secondary);
+    }
+    .rule-edit-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-color);
+    }
+    .rule-select {
+      background: var(--bg-surface-3);
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      width: 100%;
+    }
     .setting-group { display: flex; flex-direction: column; gap: 6px; }
     .setting-label {
       font-size: 12px;
@@ -2593,8 +2776,180 @@
       </div>
 
       <div class="builder-body">
+        <!-- Design Panel (hidden by default) -->
+        <div class="builder-panel-left design-panel" id="builder-panel-design" style="display:none;">
+          <div class="panel-section">
+            <div class="panel-section-title">Temas Prontos</div>
+            <div class="theme-presets-grid">
+              <button class="theme-preset" onclick="applyThemePreset('midnight')" title="Midnight Purple">
+                <div class="preset-preview" style="background: linear-gradient(135deg, #0d0d14, #1a0a2e);"><div class="preset-dot" style="background:#7c3aed"></div></div>
+                <span>Midnight</span>
+              </button>
+              <button class="theme-preset" onclick="applyThemePreset('ocean')" title="Ocean Blue">
+                <div class="preset-preview" style="background: linear-gradient(135deg, #0a1628, #0d2137);"><div class="preset-dot" style="background:#3b82f6"></div></div>
+                <span>Ocean</span>
+              </button>
+              <button class="theme-preset" onclick="applyThemePreset('emerald')" title="Emerald">
+                <div class="preset-preview" style="background: linear-gradient(135deg, #0a1a0a, #0d2d15);"><div class="preset-dot" style="background:#10b981"></div></div>
+                <span>Emerald</span>
+              </button>
+              <button class="theme-preset" onclick="applyThemePreset('rose')" title="Rose">
+                <div class="preset-preview" style="background: linear-gradient(135deg, #1a0a14, #2d0a1a);"><div class="preset-dot" style="background:#ec4899"></div></div>
+                <span>Rose</span>
+              </button>
+              <button class="theme-preset" onclick="applyThemePreset('sunset')" title="Sunset">
+                <div class="preset-preview" style="background: linear-gradient(135deg, #1a1005, #2d1a08);"><div class="preset-dot" style="background:#f59e0b"></div></div>
+                <span>Sunset</span>
+              </button>
+              <button class="theme-preset" onclick="applyThemePreset('light')" title="Light">
+                <div class="preset-preview" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef);"><div class="preset-dot" style="background:#6366f1"></div></div>
+                <span>Light</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="panel-section-title">Cores do Tema</div>
+            <div class="design-row">
+              <label class="design-label">Cor Primária</label>
+              <div class="color-pick-row"><input type="color" class="color-input" value="#7c3aed" onchange="updateDesign('primaryColor', this.value)"><span class="color-hex" id="dsg-primaryColor">#7c3aed</span></div>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Fundo da Página</label>
+              <div class="color-pick-row"><input type="color" class="color-input" value="#0d0d14" onchange="updateDesign('bgColor', this.value)"><span class="color-hex" id="dsg-bgColor">#0d0d14</span></div>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Fundo do Card</label>
+              <div class="color-pick-row"><input type="color" class="color-input" value="#15151e" onchange="updateDesign('cardBg', this.value)"><span class="color-hex" id="dsg-cardBg">#15151e</span></div>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Texto Principal</label>
+              <div class="color-pick-row"><input type="color" class="color-input" value="#ffffff" onchange="updateDesign('textColor', this.value)"><span class="color-hex" id="dsg-textColor">#ffffff</span></div>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Labels</label>
+              <div class="color-pick-row"><input type="color" class="color-input" value="#c4c4cc" onchange="updateDesign('labelColor', this.value)"><span class="color-hex" id="dsg-labelColor">#c4c4cc</span></div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="panel-section-title">Campos</div>
+            <div class="design-row">
+              <label class="design-label">Fundo do Input</label>
+              <div class="color-pick-row"><input type="color" class="color-input" value="#1c1c28" onchange="updateDesign('inputBg', this.value)"><span class="color-hex" id="dsg-inputBg">#1c1c28</span></div>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Borda do Input</label>
+              <div class="color-pick-row"><input type="color" class="color-input" value="#2a2a3a" onchange="updateDesign('inputBorder', this.value)"><span class="color-hex" id="dsg-inputBorder">#2a2a3a</span></div>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Estilo do Input</label>
+              <select class="design-select" onchange="updateDesign('inputStyle', this.value)">
+                <option value="outlined">Com Borda</option>
+                <option value="filled">Preenchido</option>
+                <option value="underline">Sublinhado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="panel-section-title">Tipografia</div>
+            <div class="design-row">
+              <label class="design-label">Fonte</label>
+              <select class="design-select" id="dsg-fontFamily" onchange="updateDesign('fontFamily', this.value)">
+                <option value="Inter">Inter</option>
+                <option value="Roboto">Roboto</option>
+                <option value="Outfit">Outfit</option>
+                <option value="Poppins">Poppins</option>
+                <option value="Open Sans">Open Sans</option>
+                <option value="Lato">Lato</option>
+                <option value="Nunito">Nunito</option>
+                <option value="Montserrat">Montserrat</option>
+                <option value="DM Sans">DM Sans</option>
+                <option value="Space Grotesk">Space Grotesk</option>
+              </select>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Tamanho base</label>
+              <div class="slider-row"><input type="range" min="12" max="20" value="15" class="design-slider" oninput="updateDesign('fontSize', this.value); this.nextElementSibling.textContent=this.value+'px'"><span class="slider-val">15px</span></div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="panel-section-title">Layout</div>
+            <div class="design-row">
+              <label class="design-label">Raio da Borda (Card)</label>
+              <div class="slider-row"><input type="range" min="0" max="32" value="12" class="design-slider" oninput="updateDesign('borderRadius', this.value); this.nextElementSibling.textContent=this.value+'px'"><span class="slider-val">12px</span></div>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Espaço entre campos</label>
+              <div class="slider-row"><input type="range" min="8" max="32" value="16" class="design-slider" oninput="updateDesign('fieldSpacing', this.value); this.nextElementSibling.textContent=this.value+'px'"><span class="slider-val">16px</span></div>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Padding do Card</label>
+              <div class="slider-row"><input type="range" min="16" max="64" value="40" class="design-slider" oninput="updateDesign('cardPadding', this.value); this.nextElementSibling.textContent=this.value+'px'"><span class="slider-val">40px</span></div>
+            </div>
+            <div class="design-row">
+              <div class="toggle-row" style="padding:0">
+                <span class="toggle-row-label">Borda do Card</span>
+                <div class="toggle-switch on" onclick="this.classList.toggle('on'); updateDesign('cardBorder', this.classList.contains('on'))"></div>
+              </div>
+            </div>
+            <div class="design-row">
+              <div class="toggle-row" style="padding:0">
+                <span class="toggle-row-label">Sombra do Card</span>
+                <div class="toggle-switch on" onclick="this.classList.toggle('on'); updateDesign('cardShadow', this.classList.contains('on'))"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="panel-section-title">Botão de Envio</div>
+            <div class="design-row">
+              <label class="design-label">Estilo</label>
+              <select class="design-select" onchange="updateDesign('buttonStyle', this.value)">
+                <option value="filled">Preenchido</option>
+                <option value="outline">Contorno</option>
+                <option value="gradient">Gradiente</option>
+                <option value="pill">Pílula</option>
+              </select>
+            </div>
+            <div class="design-row">
+              <label class="design-label">Raio da Borda (Botão)</label>
+              <div class="slider-row"><input type="range" min="0" max="50" value="10" class="design-slider" oninput="updateDesign('buttonRadius', this.value); this.nextElementSibling.textContent=this.value+'px'"><span class="slider-val">10px</span></div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="panel-section-title">Avançado</div>
+            <div class="design-row">
+              <label class="design-label">Gradiente de Fundo</label>
+              <select class="design-select" id="dsg-bgGradient" onchange="updateDesign('bgGradient', this.value)">
+                <option value="">Nenhum</option>
+                <option value="linear-gradient(135deg, #0d0d14 0%, #1a0a2e 100%)">Roxo Profundo</option>
+                <option value="linear-gradient(135deg, #0a1628 0%, #0d2137 100%)">Azul Noite</option>
+                <option value="linear-gradient(135deg, #0d0d14 0%, #1a2a1a 100%)">Verde Escuro</option>
+                <option value="linear-gradient(135deg, #1a0a0a 0%, #2d1515 100%)">Vermelho Escuro</option>
+                <option value="linear-gradient(135deg, #0d0d14 0%, #2d2010 100%)">Dourado</option>
+                <option value="linear-gradient(180deg, #1a1a2e 0%, #0d0d14 100%)">Suave Vertical</option>
+              </select>
+            </div>
+            <div class="design-row">
+              <label class="design-label">URL da Imagem de Capa</label>
+              <input type="text" class="setting-input" placeholder="https://..." value="" oninput="updateDesign('coverImage', this.value)" id="dsg-coverImage">
+            </div>
+            <div class="design-row">
+              <label class="design-label">URL do Logo</label>
+              <input type="text" class="setting-input" placeholder="https://..." value="" oninput="updateDesign('logo', this.value)" id="dsg-logo">
+            </div>
+            <div class="design-row" style="padding-top:8px">
+              <button class="btn-add-option" onclick="resetDesign()" style="color:var(--red); font-size:12px;">↺ Restaurar padrão</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Left Panel: Field Palette -->
-        <div class="builder-panel-left">
+        <div class="builder-panel-left" id="builder-fields-panel">
           <div class="panel-section">
             <div class="panel-section-title">Campos de Entrada</div>
             <div class="elements-grid">
@@ -2913,7 +3268,31 @@
       notifications: [],
       unreadCount: 0,
       conditionalRules: [],
-      webhookUrl: ''
+      webhookUrl: '',
+      activeSettingsTab: 'content',
+      activeBuilderTab: 'build',
+      formDesign: {
+        primaryColor: '#7c3aed',
+        bgColor: '#0d0d14',
+        cardBg: '#15151e',
+        textColor: '#ffffff',
+        labelColor: '#c4c4cc',
+        inputBg: '#1c1c28',
+        inputBorder: '#2a2a3a',
+        fontFamily: 'Inter',
+        fontSize: '15',
+        borderRadius: '12',
+        buttonStyle: 'filled',
+        buttonRadius: '10',
+        coverImage: '',
+        logo: '',
+        fieldSpacing: '16',
+        cardPadding: '40',
+        cardBorder: true,
+        cardShadow: true,
+        bgGradient: '',
+        inputStyle: 'outlined'
+      }
     };
 
     // ==================== TEMPLATE DATA ====================
@@ -3107,6 +3486,54 @@
       renderCanvas();
       showToast(`Template "${template.title}" carregado!`, 'success');
     }
+    function applyThemePreset(preset) {
+      const presets = {
+        'midnight': {
+          primaryColor: '#7c3aed', bgColor: '#0d0d14', cardBg: '#15151e',
+          textColor: '#ffffff', labelColor: '#c4c4cc', inputBg: '#1c1c28',
+          inputBorder: '#2a2a3a', bgGradient: 'linear-gradient(135deg, #0d0d14 0%, #1a0a2e 100%)',
+          buttonStyle: 'gradient'
+        },
+        'ocean': {
+          primaryColor: '#3b82f6', bgColor: '#06101c', cardBg: '#0f172a',
+          textColor: '#f8fafc', labelColor: '#94a3b8', inputBg: '#1e293b',
+          inputBorder: '#334155', bgGradient: 'linear-gradient(135deg, #0a1628 0%, #0d2137 100%)',
+          buttonStyle: 'gradient'
+        },
+        'emerald': {
+          primaryColor: '#10b981', bgColor: '#061c10', cardBg: '#064e3b',
+          textColor: '#f8fafc', labelColor: '#a7f3d0', inputBg: '#065f46',
+          inputBorder: '#047857', bgGradient: 'linear-gradient(135deg, #0a1a0a 0%, #0d2d15 100%)',
+          buttonStyle: 'pill'
+        },
+        'rose': {
+          primaryColor: '#ec4899', bgColor: '#1c0612', cardBg: '#4c0519',
+          textColor: '#fdf2f8', labelColor: '#fbcfe8', inputBg: '#831843',
+          inputBorder: '#be185d', bgGradient: 'linear-gradient(135deg, #1a0a14 0%, #2d0a1a 100%)',
+          buttonStyle: 'filled'
+        },
+        'sunset': {
+          primaryColor: '#f59e0b', bgColor: '#1c1006', cardBg: '#451a03',
+          textColor: '#fffbeb', labelColor: '#fde68a', inputBg: '#78350f',
+          inputBorder: '#b45309', bgGradient: 'linear-gradient(135deg, #1a1005 0%, #2d1a08 100%)',
+          buttonStyle: 'filled'
+        },
+        'light': {
+          primaryColor: '#6366f1', bgColor: '#f8f9fa', cardBg: '#ffffff',
+          textColor: '#1f2937', labelColor: '#4b5563', inputBg: '#f3f4f6',
+          inputBorder: '#e5e7eb', bgGradient: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+          buttonStyle: 'filled'
+        }
+      };
+      
+      const theme = presets[preset];
+      if (!theme) return;
+      
+      state.formDesign = { ...state.formDesign, ...theme };
+      syncDesignPanel();
+      applyDesignToCanvas();
+      showToast('Tema "' + preset + '" aplicado!', 'success');
+    }
 
     // ==================== AI ====================
     function goToAI() {
@@ -3247,12 +3674,188 @@
     function switchBuilderTab(el, tab) {
       document.querySelectorAll('.builder-tab').forEach(t => t.classList.remove('active'));
       el.classList.add('active');
-      // Could switch panels here
-      if (tab === 'design') {
-        showToast('Editor de design em breve! 🎨', 'info');
+      state.activeBuilderTab = tab;
+
+      const fieldsPanel = document.getElementById('builder-fields-panel');
+      const designPanel = document.getElementById('builder-panel-design');
+
+      if (tab === 'build') {
+        fieldsPanel.style.display = 'flex';
+        designPanel.style.display = 'none';
+      } else if (tab === 'design') {
+        fieldsPanel.style.display = 'none';
+        designPanel.style.display = 'flex';
+        syncDesignPanel();
       } else if (tab === 'settings') {
+        fieldsPanel.style.display = 'flex';
+        designPanel.style.display = 'none';
         showToast('Configurações avançadas em breve! ⚙️', 'info');
       }
+    }
+
+    function syncDesignPanel() {
+      const d = state.formDesign;
+      // Sync color inputs
+      const colorFields = ['primaryColor','bgColor','cardBg','textColor','labelColor','inputBg','inputBorder'];
+      colorFields.forEach(key => {
+        const el = document.querySelector(`#builder-panel-design input[type=color][onchange*="${key}"]`);
+        if (el) el.value = d[key];
+        const hex = document.getElementById('dsg-' + key);
+        if (hex) hex.textContent = d[key];
+      });
+      // Sync selects
+      const fontSel = document.getElementById('dsg-fontFamily');
+      if (fontSel) fontSel.value = d.fontFamily;
+      const bgGrad = document.getElementById('dsg-bgGradient');
+      if (bgGrad) bgGrad.value = d.bgGradient;
+      // Sync text inputs
+      const coverImg = document.getElementById('dsg-coverImage');
+      if (coverImg) coverImg.value = d.coverImage || '';
+      const logoImg = document.getElementById('dsg-logo');
+      if (logoImg) logoImg.value = d.logo || '';
+      // Sync sliders
+      const sliders = document.querySelectorAll('#builder-panel-design .design-slider');
+      sliders.forEach(sl => {
+        const onChange = sl.getAttribute('oninput');
+        if (onChange.includes('fontSize')) { sl.value = d.fontSize; sl.nextElementSibling.textContent = d.fontSize + 'px'; }
+        if (onChange.includes('borderRadius')) { sl.value = d.borderRadius; sl.nextElementSibling.textContent = d.borderRadius + 'px'; }
+        if (onChange.includes('fieldSpacing')) { sl.value = d.fieldSpacing; sl.nextElementSibling.textContent = d.fieldSpacing + 'px'; }
+        if (onChange.includes('cardPadding')) { sl.value = d.cardPadding; sl.nextElementSibling.textContent = d.cardPadding + 'px'; }
+        if (onChange.includes('buttonRadius')) { sl.value = d.buttonRadius; sl.nextElementSibling.textContent = d.buttonRadius + 'px'; }
+      });
+      // Sync selects for inputStyle and buttonStyle
+      const selects = document.querySelectorAll('#builder-panel-design .design-select');
+      selects.forEach(sel => {
+        const onChange = sel.getAttribute('onchange');
+        if (onChange && onChange.includes('inputStyle')) sel.value = d.inputStyle;
+        if (onChange && onChange.includes('buttonStyle')) sel.value = d.buttonStyle;
+      });
+      // Sync toggles
+      const toggles = document.querySelectorAll('#builder-panel-design .toggle-switch');
+      toggles.forEach(t => {
+        const onclick = t.getAttribute('onclick');
+        if (onclick && onclick.includes('cardBorder')) t.classList.toggle('on', d.cardBorder);
+        if (onclick && onclick.includes('cardShadow')) t.classList.toggle('on', d.cardShadow);
+      });
+    }
+
+    function updateDesign(key, value) {
+      state.formDesign[key] = value;
+      const hex = document.getElementById('dsg-' + key);
+      if (hex && typeof value === 'string' && value.startsWith('#')) hex.textContent = value;
+      applyDesignToCanvas();
+    }
+
+    function resetDesign() {
+      state.formDesign = {
+        primaryColor: '#7c3aed', bgColor: '#0d0d14', cardBg: '#15151e',
+        textColor: '#ffffff', labelColor: '#c4c4cc', inputBg: '#1c1c28',
+        inputBorder: '#2a2a3a', fontFamily: 'Inter', fontSize: '15',
+        borderRadius: '12', buttonStyle: 'filled', buttonRadius: '10',
+        coverImage: '', logo: '', fieldSpacing: '16', cardPadding: '40',
+        cardBorder: true, cardShadow: true, bgGradient: '', inputStyle: 'outlined'
+      };
+      syncDesignPanel();
+      applyDesignToCanvas();
+      showToast('Design restaurado ao padrão', 'success');
+    }
+
+    function applyDesignToCanvas() {
+      const d = state.formDesign;
+      const canvas = document.querySelector('.builder-canvas');
+      const paper = document.querySelector('.canvas-paper');
+      if (!canvas || !paper) return;
+
+      // Load font dynamically
+      if (d.fontFamily && d.fontFamily !== 'Inter') {
+        const fontLink = document.getElementById('dynamic-font-link');
+        const fontUrl = `https://fonts.googleapis.com/css2?family=${d.fontFamily.replace(/ /g, '+')}:wght@400;500;600;700;800&display=swap`;
+        if (fontLink) { fontLink.href = fontUrl; } else {
+          const link = document.createElement('link');
+          link.id = 'dynamic-font-link'; link.rel = 'stylesheet'; link.href = fontUrl;
+          document.head.appendChild(link);
+        }
+      }
+
+      // Apply background
+      if (d.bgGradient) {
+        canvas.style.background = d.bgGradient;
+      } else {
+        canvas.style.background = d.bgColor;
+      }
+
+      // Apply card
+      paper.style.background = d.cardBg;
+      paper.style.borderRadius = d.borderRadius + 'px';
+      paper.style.padding = d.cardPadding + 'px';
+      paper.style.border = d.cardBorder ? `1px solid ${d.inputBorder}` : 'none';
+      paper.style.boxShadow = d.cardShadow ? '0 20px 60px rgba(0,0,0,0.4)' : 'none';
+      paper.style.fontFamily = `'${d.fontFamily}', sans-serif`;
+
+      // Cover image
+      let coverEl = paper.querySelector('.canvas-cover-image');
+      if (d.coverImage) {
+        if (!coverEl) {
+          coverEl = document.createElement('div');
+          coverEl.className = 'canvas-cover-image';
+          paper.insertBefore(coverEl, paper.firstChild);
+        }
+        coverEl.style.cssText = `width:100%;height:160px;border-radius:${Math.max(0, d.borderRadius-8)}px;background:url('${d.coverImage}') center/cover;margin-bottom:20px;`;
+      } else if (coverEl) { coverEl.remove(); }
+
+      // Logo
+      let logoEl = paper.querySelector('.canvas-logo');
+      if (d.logo) {
+        if (!logoEl) {
+          logoEl = document.createElement('img');
+          logoEl.className = 'canvas-logo';
+          const header = paper.querySelector('.canvas-form-header');
+          if (header) header.insertBefore(logoEl, header.firstChild);
+        }
+        logoEl.src = d.logo;
+        logoEl.style.cssText = 'max-width:120px;max-height:60px;margin-bottom:16px;border-radius:8px;display:block;';
+      } else if (logoEl) { logoEl.remove(); }
+
+      // Title color
+      const titleEl = document.getElementById('canvas-form-title');
+      if (titleEl) titleEl.style.color = d.textColor;
+
+      // Desc color
+      const descEl = document.getElementById('canvas-form-desc');
+      if (descEl) descEl.style.color = d.labelColor;
+
+      // Field items
+      const fieldItems = paper.querySelectorAll('.field-item');
+      fieldItems.forEach(fi => {
+        fi.style.borderColor = d.inputBorder;
+        fi.style.fontFamily = `'${d.fontFamily}', sans-serif`;
+      });
+
+      // Field spacing
+      const fieldsContainer = document.getElementById('canvas-fields');
+      if (fieldsContainer) fieldsContainer.style.gap = d.fieldSpacing + 'px';
+
+      // Mock inputs
+      const mockInputs = paper.querySelectorAll('.field-mock-input, .field-mock-select, .field-mock-date, .field-mock-file');
+      mockInputs.forEach(inp => {
+        inp.style.background = d.inputBg;
+        inp.style.borderColor = d.inputBorder;
+        inp.style.fontSize = d.fontSize + 'px';
+        if (d.inputStyle === 'underline') {
+          inp.style.border = 'none';
+          inp.style.borderBottom = `2px solid ${d.inputBorder}`;
+          inp.style.borderRadius = '0';
+        } else if (d.inputStyle === 'filled') {
+          inp.style.border = 'none';
+        }
+      });
+
+      // Labels
+      const labels = paper.querySelectorAll('.field-item-label');
+      labels.forEach(l => {
+        l.style.color = d.textColor;
+        l.style.fontSize = d.fontSize + 'px';
+      });
     }
 
     function addField(type) {
@@ -3347,12 +3950,109 @@
       renderSettings(field);
     }
 
+    function switchSettingsTab(tab) {
+      state.activeSettingsTab = tab;
+      const field = state.fields.find(f => f.id === state.selectedFieldId);
+      if (field) renderSettings(field);
+    }
+
+    function addRule() {
+      if (!state.selectedFieldId) return;
+      const rule = {
+        id: 'rule_' + Math.random().toString(36).substr(2, 9),
+        sourceFieldId: '',
+        operator: 'equals',
+        value: '',
+        action: 'show',
+        targetFieldId: state.selectedFieldId
+      };
+      state.conditionalRules.push(rule);
+      const field = state.fields.find(f => f.id === state.selectedFieldId);
+      renderSettings(field);
+    }
+
+    function removeRule(ruleId) {
+      state.conditionalRules = state.conditionalRules.filter(r => r.id !== ruleId);
+      const field = state.fields.find(f => f.id === state.selectedFieldId);
+      renderSettings(field);
+    }
+
+    function updateRule(ruleId, prop, value) {
+      const rule = state.conditionalRules.find(r => r.id === ruleId);
+      if (rule) {
+        rule[prop] = value;
+        const field = state.fields.find(f => f.id === state.selectedFieldId);
+        renderSettings(field);
+      }
+    }
+
     function closeSettingsPanel() {
       document.getElementById('settings-panel').classList.remove('active');
     }
 
     function renderSettings(field) {
       const body = document.getElementById('settings-body');
+      
+      const tabsHtml = `
+        <div class="settings-tabs" style="margin: -20px -20px 20px -20px;">
+          <div class="settings-tab ${state.activeSettingsTab === 'content' ? 'active' : ''}" onclick="switchSettingsTab('content')">Conteúdo</div>
+          <div class="settings-tab ${state.activeSettingsTab === 'logic' ? 'active' : ''}" onclick="switchSettingsTab('logic')">Lógica</div>
+        </div>
+      `;
+
+      if (state.activeSettingsTab === 'logic') {
+        const fieldRules = state.conditionalRules.filter(r => r.targetFieldId === field.id);
+        const sourceFields = state.fields.filter(f => f.id !== field.id);
+        
+        const rulesHtml = fieldRules.map(rule => {
+          return `
+            <div class="rule-item">
+              <div class="rule-header">
+                <span>Regra</span>
+                <button onclick="removeRule('${rule.id}')" style="color:var(--red); font-size:10px; background:none; border:none; cursor:pointer;">Remover</button>
+              </div>
+              <div class="rule-edit-box">
+                <label class="setting-label">Se o campo...</label>
+                <select class="rule-select" onchange="updateRule('${rule.id}', 'sourceFieldId', this.value)">
+                  <option value="">Selecione um campo</option>
+                  ${sourceFields.map(f => `<option value="${f.id}" ${f.id === rule.sourceFieldId ? 'selected' : ''}>${f.label}</option>`).join('')}
+                </select>
+                
+                <label class="setting-label">for...</label>
+                <select class="rule-select" onchange="updateRule('${rule.id}', 'operator', this.value)">
+                  <option value="equals" ${rule.operator === 'equals' ? 'selected' : ''}>Igual a</option>
+                  <option value="not_equals" ${rule.operator === 'not_equals' ? 'selected' : ''}>Diferente de</option>
+                  <option value="contains" ${rule.operator === 'contains' ? 'selected' : ''}>Contém</option>
+                  <option value="not_empty" ${rule.operator === 'not_empty' ? 'selected' : ''}>Não está vazio</option>
+                </select>
+                
+                ${rule.operator !== 'not_empty' ? `
+                  <input type="text" class="setting-input" placeholder="Valor" value="${rule.value}" oninput="updateRule('${rule.id}', 'value', this.value)">
+                ` : ''}
+
+                <label class="setting-label">então...</label>
+                <select class="rule-select" onchange="updateRule('${rule.id}', 'action', this.value)">
+                  <option value="show" ${rule.action === 'show' ? 'selected' : ''}>Mostrar este campo</option>
+                  <option value="hide" ${rule.action === 'hide' ? 'selected' : ''}>Esconder este campo</option>
+                </select>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        body.innerHTML = `
+          ${tabsHtml}
+          <div class="setting-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <label class="setting-label">Regras de Exibição</label>
+              <button class="btn-add-option" onclick="addRule()" style="padding:0; border:none; background:none; cursor:pointer;">+ Adicionar</button>
+            </div>
+            ${rulesHtml || '<p style="font-size:12px; color:var(--text-muted); text-align:center; padding:20px 0;">Nenhuma regra definida.</p>'}
+          </div>
+        `;
+        return;
+      }
+
       const hasOptions = ['multiple_choice', 'checkboxes', 'dropdown'].includes(field.type);
       
       let optionsHtml = '';
@@ -3380,6 +4080,7 @@
       }
 
       body.innerHTML = `
+        ${tabsHtml}
         <div class="setting-group">
           <label class="setting-label">Título da Pergunta</label>
           <input type="text" class="setting-input" value="${field.label}" oninput="updateFieldProp('label', this.value)">
@@ -3513,88 +4214,52 @@
       });
     }
 
-    // ==================== PUBLISH ====================
-    function publishForm() {
-      const title = document.getElementById('builder-form-title').value || 'Formulário sem título';
-      const desc = document.getElementById('canvas-form-desc').value || '';
-      
-      // Check if editing existing form
-      if (state.currentFormId) {
-        const form = state.forms.find(f => f.id === state.currentFormId);
-        if (form) {
-          form.title = title;
-          form.desc = desc;
-          form.fields = JSON.parse(JSON.stringify(state.fields));
-          form.status = 'published';
-          form.updatedAt = new Date().toLocaleDateString('pt-BR');
-        }
-      } else {
-        const emojis = ['📋', '📝', '📊', '📎', '📌', '✏️', '📑', '🗒️'];
-        const form = {
-          id: 'f_' + Date.now(),
-          title,
-          desc,
-          emoji: emojis[Math.floor(Math.random() * emojis.length)],
-          fields: JSON.parse(JSON.stringify(state.fields)),
-          status: 'published',
-          createdAt: new Date().toLocaleDateString('pt-BR'),
-          updatedAt: new Date().toLocaleDateString('pt-BR'),
-          views: Math.floor(Math.random() * 50),
-          responseCount: 0
-        };
-        state.forms.push(form);
-        state.currentFormId = form.id;
-        // Generate sample responses
-        generateSampleResponses(form);
-      }
-      
-      showToast('Formulário publicado com sucesso! 🎉', 'success');
-      goToDashboard();
-      state.currentFormId = null;
+    // ==================== SHARE ====================
+    function switchShareTab(tab, el) {
+      document.querySelectorAll('.share-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.querySelectorAll('.share-content').forEach(c => c.classList.remove('active'));
+      document.getElementById('share-' + tab).classList.add('active');
     }
 
-    function generateSampleResponses(form) {
-      const names = ['Ana Silva', 'Bruno Costa', 'Carla Lima', 'Diego Souza', 'Elena Ribeiro', 'Felipe Santos', 'Gabriela Oliveira'];
-      const emails = ['ana@email.com', 'bruno@test.com', 'carla@mail.com', 'diego@corp.com', 'elena@inbox.com'];
-      const count = Math.floor(Math.random() * 5) + 2;
-      
-      state.responses[form.id] = [];
-      for (let i = 0; i < count; i++) {
-        const response = {
-          id: 'r_' + Math.random().toString(36).substr(2, 9),
-          submittedAt: new Date(Date.now() - Math.random() * 86400000 * 7).toLocaleDateString('pt-BR'),
-          data: {}
-        };
-        form.fields.forEach(field => {
-          switch (field.type) {
-            case 'text': case 'phone': 
-              response.data[field.id] = names[Math.floor(Math.random() * names.length)]; break;
-            case 'email':
-              response.data[field.id] = emails[Math.floor(Math.random() * emails.length)]; break;
-            case 'textarea':
-              response.data[field.id] = 'Ótima experiência, recomendo!'; break;
-            case 'number':
-              response.data[field.id] = String(Math.floor(Math.random() * 100)); break;
-            case 'rating':
-              response.data[field.id] = String(Math.floor(Math.random() * 3) + 3); break;
-            case 'scale':
-              response.data[field.id] = String(Math.floor(Math.random() * 4) + 7); break;
-            case 'radio': case 'dropdown':
-              response.data[field.id] = field.options?.[Math.floor(Math.random() * (field.options?.length || 1))] || 'N/A'; break;
-            case 'checkbox':
-              response.data[field.id] = field.options?.slice(0, Math.floor(Math.random() * 3) + 1).join(', ') || 'N/A'; break;
-            case 'date':
-              response.data[field.id] = new Date(Date.now() + Math.random() * 86400000 * 30).toLocaleDateString('pt-BR'); break;
-            default:
-              response.data[field.id] = '—';
-          }
-        });
-        state.responses[form.id].push(response);
-      }
-      form.responseCount = count;
+    function openShareModal() {
+      const formId = state.currentFormId || (state.forms.length > 0 ? state.forms[0].id : '');
+      const link = window.location.origin + '/form/' + formId;
+      const linkInput = document.getElementById('share-link-input');
+      if (linkInput) linkInput.value = link;
+      const embedEl = document.querySelector('.embed-code');
+      if (embedEl) embedEl.value = `<iframe src="${link}" width="100%" height="600px" style="border:none; border-radius:12px; background:transparent;" allowfullscreen></iframe>`;
+      document.getElementById('share-modal').classList.add('active');
+      generateQR();
     }
 
-    // ==================== PREVIEW ====================
+    function copyShareLink() {
+      const input = document.getElementById('share-link-input');
+      navigator.clipboard?.writeText(input.value);
+      showToast('Link copiado! 📋', 'success');
+    }
+
+    function copyEmbed() {
+      const el = document.querySelector('.embed-code');
+      navigator.clipboard?.writeText(el.value);
+      showToast('Código embed copiado!', 'success');
+    }
+
+    function generateQR() {
+      const grid = document.getElementById('qr-grid');
+      if (!grid) return;
+      const pattern = [];
+      for (let i = 0; i < 49; i++) {
+        const row = Math.floor(i / 7);
+        const col = i % 7;
+        const isCorner = (row < 3 && col < 3) || (row < 3 && col > 3) || (row > 3 && col < 3);
+        const isDark = isCorner || Math.random() > 0.5;
+        pattern.push(isDark);
+      }
+      grid.innerHTML = pattern.map(dark => `<div class="qr-cell ${dark ? 'dark' : 'light'}"></div>`).join('');
+    }
+
+    // ==================== NAVIGATION ====================
     function goToPreview() {
       hideAllViews();
       document.getElementById('view-preview').classList.add('active');
@@ -3611,6 +4276,8 @@
       if (size !== 'desktop') frame.classList.add(size);
     }
 
+    const previewValues = {};
+
     function renderPreview() {
       const card = document.getElementById('preview-card');
       const title = document.getElementById('canvas-form-title')?.value || state.formTitle;
@@ -3620,39 +4287,51 @@
         const req = field.required ? '<span class="required">*</span>' : '';
         let inputHtml = '';
 
+        const onInput = `oninput="previewValues['${field.id}'] = this.value; applyPreviewRules();"`;
+
         switch (field.type) {
-          case 'text': case 'email': case 'number': case 'phone':
-            const types = { text: 'text', email: 'email', number: 'number', phone: 'tel' };
-            const phs = { text: 'Sua resposta...', email: 'exemplo@email.com', number: '0', phone: '(00) 00000-0000' };
-            inputHtml = `<input class="preview-input" type="${types[field.type]}" placeholder="${field.placeholder || phs[field.type]}">`;
+          case 'short_text': case 'email': case 'number': case 'phone':
+            const types = { short_text: 'text', email: 'email', number: 'number', phone: 'tel' };
+            const phs = { short_text: 'Sua resposta...', email: 'exemplo@email.com', number: '0', phone: '(00) 00000-0000' };
+            inputHtml = `<input class="preview-input" type="${types[field.type]}" placeholder="${field.placeholder || phs[field.type]}" ${onInput}>`;
             break;
-          case 'textarea':
-            inputHtml = `<textarea class="preview-input" placeholder="${field.placeholder || 'Sua resposta...'}" rows="3"></textarea>`;
+          case 'long_text':
+            inputHtml = `<textarea class="preview-input" placeholder="${field.placeholder || 'Sua resposta...'}" rows="3" ${onInput}></textarea>`;
             break;
           case 'date':
-            inputHtml = `<input class="preview-input" type="date">`;
+            inputHtml = `<input class="preview-input" type="date" ${onInput}>`;
             break;
-          case 'radio':
-            inputHtml = `<div class="preview-option-group">${(field.options || []).map(o => `<div class="preview-option" onclick="selectPreviewOption(this)"><div class="option-circle"></div>${o}</div>`).join('')}</div>`;
+          case 'multiple_choice':
+            inputHtml = `<div class="preview-option-group">${(field.options || []).map(o => `
+              <div class="preview-option" onclick="previewValues['${field.id}']='${o}'; selectPreviewOption(this); applyPreviewRules();">
+                <div class="option-circle"></div>${o}
+              </div>`).join('')}</div>`;
             break;
-          case 'checkbox':
-            inputHtml = `<div class="preview-option-group">${(field.options || []).map(o => `<div class="preview-option" onclick="togglePreviewCheck(this)"><div class="option-square"></div>${o}</div>`).join('')}</div>`;
+          case 'checkboxes':
+            inputHtml = `<div class="preview-option-group">${(field.options || []).map(o => `
+              <div class="preview-option" onclick="this.classList.toggle('selected'); updatePreviewCheck('${field.id}'); applyPreviewRules();">
+                <div class="option-square"></div>${o}
+              </div>`).join('')}</div>`;
             break;
           case 'dropdown':
-            inputHtml = `<select class="preview-input" style="appearance: auto;"><option value="">Selecione...</option>${(field.options || []).map(o => `<option>${o}</option>`).join('')}</select>`;
+            inputHtml = `<select class="preview-input" style="appearance: auto;" onchange="previewValues['${field.id}'] = this.value; applyPreviewRules();">
+              <option value="">Selecione...</option>
+              ${(field.options || []).map(o => `<option>${o}</option>`).join('')}
+            </select>`;
             break;
           case 'rating':
-            inputHtml = `<div style="display:flex; gap:4px;">${[1,2,3,4,5].map(n => `<span class="preview-star" onclick="setRating(this, ${n})">★</span>`).join('')}</div>`;
+            inputHtml = `<div style="display:flex; gap:4px;">${[1,2,3,4,5].map(n => `<span class="preview-star" onclick="previewValues['${field.id}']='${n}'; setRating(this, ${n}); applyPreviewRules();">★</span>`).join('')}</div>`;
             break;
           case 'scale':
-            inputHtml = `<div class="preview-scale-group">${Array.from({length: 11}, (_, i) => `<button class="preview-scale-btn" onclick="selectScale(this)">${i}</button>`).join('')}</div>`;
+            inputHtml = `<div class="preview-scale-group">${Array.from({length: 11}, (_, i) => `
+              <button class="preview-scale-btn" onclick="previewValues['${field.id}']='${i}'; selectScale(this); applyPreviewRules();">${i}</button>`).join('')}</div>`;
             break;
-          case 'file':
+          case 'file_upload':
             inputHtml = `<div class="field-mock-file" style="cursor:pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg><span style="font-size:13px;">Clique para enviar arquivo</span></div>`;
             break;
         }
 
-        return `<div class="preview-field-group"><label class="preview-label">${field.label} ${req}</label>${inputHtml}</div>`;
+        return `<div class="preview-field-group" data-field-id="${field.id}"><label class="preview-label">${field.label} ${req}</label>${inputHtml}</div>`;
       }).join('');
 
       card.innerHTML = `
@@ -3661,13 +4340,49 @@
         <div class="preview-fields">${fieldsHtml}</div>
         <button class="preview-submit" onclick="submitPreview()">Enviar</button>
       `;
+      applyPreviewRules();
+      applyDesignToPreview();
+    }
+
+    function applyPreviewRules() {
+      state.fields.forEach(field => {
+        const rules = state.conditionalRules.filter(r => r.targetFieldId === field.id);
+        const el = document.querySelector(`[data-field-id="${field.id}"]`);
+        if (!el) return;
+
+        let shouldShow = true;
+        if (rules.length > 0) {
+          shouldShow = rules.some(rule => {
+            const val = previewValues[rule.sourceFieldId] || '';
+            const targetVal = rule.value || '';
+            
+            switch (rule.operator) {
+              case 'equals': return String(val).toLowerCase() === String(targetVal).toLowerCase();
+              case 'not_equals': return String(val).toLowerCase() !== String(targetVal).toLowerCase();
+              case 'contains': return String(val).toLowerCase().includes(String(targetVal).toLowerCase());
+              case 'not_empty': return String(val).trim().length > 0;
+              default: return true;
+            }
+          });
+          
+          // If any show/hide action is different, we handle it
+          const action = rules[0].action; // Assume same action for all rules on one field for simplicity
+          if (action === 'hide') shouldShow = !shouldShow;
+        }
+
+        el.style.display = shouldShow ? 'block' : 'none';
+      });
     }
 
     function selectPreviewOption(el) {
       el.parentElement.querySelectorAll('.preview-option').forEach(o => o.classList.remove('selected'));
       el.classList.add('selected');
     }
-    function togglePreviewCheck(el) { el.classList.toggle('selected'); }
+    function updatePreviewCheck(fieldId) {
+      const container = document.querySelector(`[data-field-id="${fieldId}"]`);
+      const selected = Array.from(container.querySelectorAll('.preview-option.selected')).map(o => o.textContent.trim());
+      previewValues[fieldId] = selected.join(', ');
+    }
     function setRating(el, val) {
       const stars = el.parentElement.querySelectorAll('.preview-star');
       stars.forEach((s, i) => { s.classList.toggle('active', i < val); });
@@ -3680,6 +4395,94 @@
       document.getElementById('preview-card').style.display = 'none';
       document.getElementById('success-screen').classList.add('active');
     }
+
+    function applyDesignToPreview() {
+      const d = state.formDesign;
+      if (!d) return;
+      const card = document.getElementById('preview-card');
+      const frame = document.getElementById('preview-frame');
+      if (!card || !frame) return;
+
+      if (d.bgGradient) { frame.parentElement.style.background = d.bgGradient; } 
+      else { frame.parentElement.style.background = d.bgColor; }
+
+      card.style.background = d.cardBg;
+      card.style.borderRadius = d.borderRadius + 'px';
+      card.style.padding = d.cardPadding + 'px';
+      card.style.border = d.cardBorder ? `1px solid ${d.inputBorder}` : 'none';
+      card.style.boxShadow = d.cardShadow ? '0 20px 60px rgba(0,0,0,0.4)' : 'none';
+      card.style.fontFamily = `'${d.fontFamily}', sans-serif`;
+
+      let coverEl = card.querySelector('.preview-cover-image');
+      if (d.coverImage) {
+        if (!coverEl) { coverEl = document.createElement('div'); coverEl.className = 'preview-cover-image'; card.insertBefore(coverEl, card.firstChild); }
+        coverEl.style.cssText = `width:100%;height:160px;border-radius:${Math.max(0, d.borderRadius-8)}px;background:url('${d.coverImage}') center/cover;margin-bottom:20px;`;
+      } else if (coverEl) { coverEl.remove(); }
+
+      let logoEl = card.querySelector('.preview-logo');
+      if (d.logo) {
+        if (!logoEl) { logoEl = document.createElement('img'); logoEl.className = 'preview-logo'; const title = card.querySelector('.preview-title'); if (title) card.insertBefore(logoEl, title); }
+        logoEl.src = d.logo; logoEl.style.cssText = 'max-width:120px;max-height:60px;margin-bottom:16px;border-radius:8px;display:block;';
+      } else if (logoEl) { logoEl.remove(); }
+
+      const titleEl = card.querySelector('.preview-title'); if (titleEl) titleEl.style.color = d.textColor;
+      const descEl = card.querySelector('.preview-desc'); if (descEl) descEl.style.color = d.labelColor;
+
+      const fieldsContainer = card.querySelector('.preview-fields');
+      if (fieldsContainer) fieldsContainer.style.gap = d.fieldSpacing + 'px';
+
+      const inputs = card.querySelectorAll('.preview-input');
+      inputs.forEach(inp => {
+        inp.style.background = d.inputBg; inp.style.borderColor = d.inputBorder; inp.style.fontSize = d.fontSize + 'px';
+        inp.style.color = d.textColor;
+        if (d.inputStyle === 'underline') { inp.style.border = 'none'; inp.style.borderBottom = `2px solid ${d.inputBorder}`; inp.style.borderRadius = '0'; }
+        else if (d.inputStyle === 'filled') { inp.style.border = 'none'; }
+      });
+
+      const options = card.querySelectorAll('.preview-option');
+      options.forEach(opt => {
+        opt.style.background = d.inputBg; opt.style.borderColor = d.inputBorder; opt.style.color = d.textColor; opt.style.fontSize = d.fontSize + 'px';
+      });
+
+      const labels = card.querySelectorAll('.preview-label');
+      labels.forEach(l => { l.style.color = d.textColor; l.style.fontSize = d.fontSize + 'px'; });
+
+      const btn = card.querySelector('.preview-submit');
+      if (btn) {
+        btn.style.borderRadius = (d.buttonRadius || 10) + 'px';
+        btn.style.fontFamily = `'${d.fontFamily}', sans-serif`;
+        const adjustColor = (hex, amount) => {
+          if (!hex || !hex.startsWith('#')) return '#ffffff';
+          hex = hex.replace('#', '');
+          const r = Math.max(0, Math.min(255, parseInt(hex.substring(0,2),16) + amount));
+          const g = Math.max(0, Math.min(255, parseInt(hex.substring(2,4),16) + amount));
+          const b = Math.max(0, Math.min(255, parseInt(hex.substring(4,6),16) + amount));
+          return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+        };
+        const color = d.primaryColor || '#7c3aed';
+        
+        btn.style.background = ''; btn.style.border = 'none'; btn.style.boxShadow = 'none'; btn.style.color = 'white';
+        
+        if (d.buttonStyle === 'filled') {
+          btn.style.background = color;
+          btn.style.boxShadow = `0 4px 16px ${color}40`;
+        } else if (d.buttonStyle === 'outline') {
+          btn.style.background = 'transparent';
+          btn.style.border = `2px solid ${color}`;
+          btn.style.color = color;
+        } else if (d.buttonStyle === 'gradient') {
+          btn.style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -30)})`;
+          btn.style.boxShadow = `0 4px 16px ${color}40`;
+        } else if (d.buttonStyle === 'pill') {
+          btn.style.borderRadius = '50px';
+          btn.style.background = color;
+          btn.style.boxShadow = `0 4px 16px ${color}40`;
+        } else {
+          btn.style.background = color;
+        }
+      }
+    }
+
 
     // ==================== RESPONSES ====================
     let currentResponseFormId = null;
@@ -4182,51 +4985,6 @@
                 <button onclick="event.stopPropagation(); viewResponses('${form.id}')" title="Ver respostas">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 </button>
-                <button onclick="event.stopPropagation(); state.currentFormId=${form.id}; openShareModal()" title="Compartilhar">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                </button>
-                <button onclick="duplicateForm('${form.id}', event)" title="Duplicar">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                </button>
-                <button onclick="deleteForm('${form.id}', event)" title="Excluir">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-              </div>
-            </div>
-            <div class="form-card-status ${form.status}">
-              <span class="dot"></span>
-              ${form.status === 'published' ? 'Publicado' : 'Rascunho'}
-            </div>
-          </div>
-        `).join('');
-      } else {
-        gridContainer.style.display = 'none';
-        listContainer.style.display = 'flex';
-        listContainer.innerHTML = filteredForms.map(form => `
-          <div class="form-list-item" onclick="editForm('${form.id}')">
-            <div class="form-list-emoji">${form.emoji}</div>
-            <div class="form-list-info">
-              <div class="form-list-title">${form.title}</div>
-              <div class="form-list-meta">Atualizado em ${form.updatedAt} • ${form.fields?.length || 0} campos</div>
-            </div>
-            <div class="form-card-status ${form.status}" style="margin-right: 16px;">
-              <span class="dot"></span>
-              ${form.status === 'published' ? 'Publicado' : 'Rascunho'}
-            </div>
-            <div class="form-list-stats">
-              <div class="form-list-stat">
-                <div class="form-list-stat-value">${state.responses[form.id]?.length || 0}</div>
-                <div class="form-list-stat-label">Respostas</div>
-              </div>
-              <div class="form-list-stat">
-                <div class="form-list-stat-value">${form.views || 0}</div>
-                <div class="form-list-stat-label">Views</div>
-              </div>
-            </div>
-            <div class="form-card-actions" style="opacity: 1; margin-left: 12px;">
-              <button onclick="event.stopPropagation(); viewResponses('${form.id}')" title="Ver respostas">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              </button>
               <button onclick="deleteForm('${form.id}', event)" title="Excluir">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               </button>
@@ -4461,6 +5219,12 @@
         document.getElementById('stat-rate').textContent = conversionRate + '%';
 
         renderDashboard();
+
+        // Populate responses seletor
+        const select = document.getElementById('responses-form-select');
+        if (select) {
+          select.innerHTML = state.forms.map(f => `<option value="${f.id}">${f.title}</option>`).join('');
+        }
       } catch (err) {
         console.error('Error loading forms:', err);
         showToast('Erro ao carregar formulários', 'error');
@@ -4482,14 +5246,31 @@
         if (state.currentFormId && typeof state.currentFormId === 'number') {
           const { error } = await supabaseClient
             .from('forms')
-            .update({ title, description: desc, fields: state.fields, status: 'published', updated_at: new Date().toISOString() })
+            .update({ 
+              title, 
+              description: desc, 
+              fields: state.fields, 
+              conditional_rules: state.conditionalRules,
+              theme_color: JSON.stringify(state.formDesign),
+              status: 'published', 
+              updated_at: new Date().toISOString() 
+            })
             .eq('id', state.currentFormId)
             .eq('user_id', user.id);
           if (error) throw error;
         } else {
           const { data, error } = await supabaseClient
             .from('forms')
-            .insert({ user_id: user.id, title, description: desc, emoji, fields: state.fields, status: 'published' })
+            .insert({ 
+              user_id: user.id, 
+              title, 
+              description: desc, 
+              emoji, 
+              fields: state.fields, 
+              conditional_rules: state.conditionalRules,
+              theme_color: JSON.stringify(state.formDesign),
+              status: 'published' 
+            })
             .select()
             .single();
           if (error) throw error;
@@ -4521,12 +5302,28 @@
     // ==================== EDIT FORM (Supabase) ====================
     const _origEditForm = editForm;
     editForm = async function(formId) {
+      if (!formId) return showToast('ID do formulário inválido', 'error');
       try {
-        const { data: form, error } = await supabaseClient.from('forms').select('*').eq('id', formId).single();
+        const { data, error } = await supabaseClient.from('forms').select('*').eq('id', Number(formId));
         if (error) throw error;
+
+        if (!data || data.length === 0) {
+          showToast('Formulário não encontrado ou você não tem permissão para editá-lo.', 'error');
+          return;
+        }
+        const form = data[0];
 
         state.currentFormId = form.id;
         state.fields = form.fields || [];
+        state.conditionalRules = form.conditional_rules || [];
+        
+        // Load design settings
+        try {
+          if (form.theme_color && form.theme_color.startsWith('{')) {
+            state.formDesign = { ...state.formDesign, ...JSON.parse(form.theme_color) };
+          }
+        } catch(e) { console.warn('Could not parse design:', e); }
+        
         state.formTitle = form.title;
         state.formDesc = form.description || '';
         state.selectedFieldId = null;
@@ -4539,6 +5336,7 @@
         document.getElementById('view-builder').classList.add('active');
         closeSettingsPanel();
         renderCanvas();
+        applyDesignToCanvas();
       } catch (err) {
         showToast('Erro ao abrir formulário: ' + err.message, 'error');
       }
@@ -4547,13 +5345,22 @@
     // ==================== VIEW RESPONSES (Supabase) ====================
     const _origViewResponses = viewResponses;
     viewResponses = async function(formId) {
+      if (!formId) return showToast('ID do formulário inválido', 'error');
       try {
-        const { data: form } = await supabaseClient.from('forms').select('*').eq('id', formId).single();
+        const { data, error } = await supabaseClient.from('forms').select('*').eq('id', Number(formId));
+        if (error || !data || data.length === 0) {
+          showToast('Não foi possível carregar os dados do formulário.', 'error');
+          return;
+        }
+        const form = data[0];
         const { data: responses } = await supabaseClient.from('responses').select('*').eq('form_id', formId).order('submitted_at', { ascending: false });
 
         hideAllViews();
         document.getElementById('view-responses').classList.add('active');
-        document.getElementById('responses-form-title').textContent = form.title + ' — Respostas';
+        
+        // Update selector value
+        const select = document.getElementById('responses-form-select');
+        if (select) select.value = formId;
 
         const body = document.getElementById('responses-body');
         const rate = form.views > 0 ? Math.round(((responses||[]).length / form.views) * 100) : 0;
@@ -4646,8 +5453,11 @@
 
     // ==================== CSV EXPORT (Client-side) ====================
     exportCSV = async function(formId) {
+      if (!formId) return showToast('ID do formulário inválido', 'error');
       try {
-        const { data: form } = await supabaseClient.from('forms').select('*').eq('id', formId).single();
+        const { data: forms } = await supabaseClient.from('forms').select('*').eq('id', Number(formId));
+        if (!forms || forms.length === 0) throw new Error('Formulário não encontrado');
+        const form = forms[0];
         const { data: responses } = await supabaseClient.from('responses').select('*').eq('form_id', formId).order('submitted_at', { ascending: false });
         const fields = form.fields || [];
         const headers = fields.map(f => `"${(f.label || '').replace(/"/g, '""')}"`).concat(['"Data"']);
@@ -4816,7 +5626,8 @@
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session?.user) {
           try {
-            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', session.user.id).single();
+            const { data: profiles } = await supabaseClient.from('profiles').select('*').eq('id', session.user.id);
+            const profile = profiles && profiles.length > 0 ? profiles[0] : null;
             const user = {
               id: session.user.id,
               email: session.user.email,

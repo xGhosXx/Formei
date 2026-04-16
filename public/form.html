@@ -381,32 +381,152 @@
       }
 
       // Load form data
-      const { data: form, error } = await supabaseClient.from('forms')
+      const { data, error } = await supabaseClient.from('forms')
         .select('id, title, description, fields, theme_color, conditional_rules')
         .eq('id', parseInt(formId))
-        .eq('status', 'published')
-        .single();
+        .eq('status', 'published');
+      
+      const form = data && data.length > 0 ? data[0] : null;
 
       if (error) {
         console.error('Database error:', error);
         throw error;
       }
-      if (!form) throw new Error('Not found');
+      if (!form) throw new Error('Formulário não encontrado ou não publicado.');
 
       formData = form;
       conditionalRules = form.conditional_rules || [];
 
-      // Apply theme
-      const color = formData.theme_color || '#7c3aed';
-      document.documentElement.style.setProperty('--accent', color);
-      document.getElementById('submit-btn').style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -20)})`;
-      document.getElementById('submit-btn').style.boxShadow = `0 4px 16px ${color}40`;
+      // Apply design settings
+      let design = null;
+      try {
+        if (formData.theme_color && formData.theme_color.startsWith('{')) {
+          design = JSON.parse(formData.theme_color);
+        }
+      } catch(e) { console.warn('Could not parse design:', e); }
+
+      if (design) {
+        const color = design.primaryColor || '#7c3aed';
+        document.documentElement.style.setProperty('--accent', color);
+        document.documentElement.style.setProperty('--accent-light', adjustColor(color, 20));
+        document.documentElement.style.setProperty('--bg', design.bgColor || '#09090b');
+        document.documentElement.style.setProperty('--bg-card', design.cardBg || '#0f0f12');
+        document.documentElement.style.setProperty('--bg-input', design.inputBg || '#16161a');
+        document.documentElement.style.setProperty('--border', design.inputBorder || 'rgba(255,255,255,0.08)');
+        document.documentElement.style.setProperty('--text', design.textColor || '#fafafa');
+        document.documentElement.style.setProperty('--text-secondary', design.labelColor || '#d4d4d8');
+        document.documentElement.style.setProperty('--radius', (design.borderRadius || '10') + 'px');
+
+        // Font
+        if (design.fontFamily && design.fontFamily !== 'Inter') {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = `https://fonts.googleapis.com/css2?family=${design.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;
+          document.head.appendChild(link);
+          document.body.style.fontFamily = `'${design.fontFamily}', system-ui, sans-serif`;
+        }
+
+        if (design.fontSize) {
+          document.querySelectorAll('.field-input').forEach(el => el.style.fontSize = design.fontSize + 'px');
+        }
+
+        // Background gradient
+        if (design.bgGradient) {
+          document.body.style.background = design.bgGradient;
+        }
+
+        // Card styles
+        const card = document.querySelector('.form-card');
+        if (card) {
+          card.style.borderRadius = (design.borderRadius || 16) + 'px';
+          card.style.padding = (design.cardPadding || 36) + 'px';
+          if (!design.cardBorder) card.style.border = 'none';
+          if (!design.cardShadow) card.style.boxShadow = 'none';
+        }
+
+        // Cover image
+        if (design.coverImage) {
+          const coverDiv = document.createElement('div');
+          coverDiv.style.cssText = `width:100%;height:160px;border-radius:${Math.max(0,(design.borderRadius||16)-8)}px;background:url('${design.coverImage}') center/cover;margin-bottom:20px;`;
+          const wrapper = document.querySelector('.form-wrapper');
+          if (wrapper) wrapper.insertBefore(coverDiv, wrapper.firstChild);
+        }
+
+        // Logo
+        if (design.logo) {
+          const logoImg = document.createElement('img');
+          logoImg.src = design.logo;
+          logoImg.style.cssText = 'max-width:120px;max-height:60px;margin:0 auto 16px;display:block;border-radius:8px;';
+          const header = document.querySelector('.form-header');
+          if (header) header.insertBefore(logoImg, header.firstChild);
+        }
+
+        // Button styles
+        const btn = document.getElementById('submit-btn');
+        if (btn) {
+          btn.style.borderRadius = (design.buttonRadius || 10) + 'px';
+          if (design.buttonStyle === 'filled') {
+            btn.style.background = color;
+            btn.style.boxShadow = `0 4px 16px ${color}40`;
+          } else if (design.buttonStyle === 'outline') {
+            btn.style.background = 'transparent';
+            btn.style.border = `2px solid ${color}`;
+            btn.style.color = color;
+            btn.style.boxShadow = 'none';
+          } else if (design.buttonStyle === 'gradient') {
+            btn.style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -30)})`;
+            btn.style.boxShadow = `0 4px 16px ${color}40`;
+          } else if (design.buttonStyle === 'pill') {
+            btn.style.borderRadius = '50px';
+            btn.style.background = color;
+            btn.style.boxShadow = `0 4px 16px ${color}40`;
+          } else {
+            btn.style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -20)})`;
+            btn.style.boxShadow = `0 4px 16px ${color}40`;
+          }
+        }
+
+        // Input styles
+        if (design.inputStyle === 'underline') {
+          document.querySelectorAll('.field-input').forEach(el => {
+            el.style.border = 'none';
+            el.style.borderBottom = `2px solid ${design.inputBorder || 'rgba(255,255,255,0.08)'}`;
+            el.style.borderRadius = '0';
+          });
+        } else if (design.inputStyle === 'filled') {
+          document.querySelectorAll('.field-input').forEach(el => {
+            el.style.border = 'none';
+          });
+        }
+      } else {
+        // Legacy: simple color string
+        const color = formData.theme_color || '#7c3aed';
+        document.documentElement.style.setProperty('--accent', color);
+        document.getElementById('submit-btn').style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -20)})`;
+        document.getElementById('submit-btn').style.boxShadow = `0 4px 16px ${color}40`;
+      }
 
       document.getElementById('form-title').textContent = formData.title;
       document.getElementById('form-desc').textContent = formData.description || '';
       document.title = formData.title + ' - Formei';
 
       renderFields();
+
+      // Apply input styles after fields are rendered (for design)
+      if (design) {
+        if (design.fontSize) {
+          document.querySelectorAll('.field-input').forEach(el => el.style.fontSize = design.fontSize + 'px');
+        }
+        if (design.inputStyle === 'underline') {
+          document.querySelectorAll('.field-input').forEach(el => {
+            el.style.border = 'none';
+            el.style.borderBottom = `2px solid ${design.inputBorder || 'rgba(255,255,255,0.08)'}`;
+            el.style.borderRadius = '0';
+          });
+        } else if (design.inputStyle === 'filled') {
+          document.querySelectorAll('.field-input').forEach(el => { el.style.border = 'none'; });
+        }
+      }
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('form-container').style.display = 'block';

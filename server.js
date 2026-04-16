@@ -20,9 +20,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'formei_secret_key_2024_ultraSeguro
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION;
 
 if (!supabase) {
   console.warn('⚠️ Supabase credentials not found. Local JSON DB will be used (limited persistence on Vercel).');
+} else {
+  console.log('✅ Supabase integrated successfully.');
 }
 
 // Middleware
@@ -41,9 +44,13 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // File upload setup
-// For local fallback
+// For local fallback (wrapped in try-catch for Vercel read-only FS)
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+} catch (e) {
+  console.log('ℹ️ Running in read-only environment (normal for Vercel). Disabling local uploads.');
+}
 
 // We'll use memory storage for Supabase uploads, and disk storage for local fallback
 const memoryStorage = multer.memoryStorage();
@@ -56,7 +63,7 @@ const diskStorage = multer.diskStorage({
 });
 
 const upload = multer({
-  storage: (SUPABASE_URL && SUPABASE_KEY) ? memoryStorage : diskStorage,
+  storage: supabase ? memoryStorage : diskStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|csv|txt|zip|mp4|webm/;
@@ -77,24 +84,31 @@ const dbDir = path.join(__dirname, 'db');
 
 function loadDB() {
   try {
-    if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+    // Skip file creation on Vercel
+    if (!isVercel) {
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+    }
+    
     if (!fs.existsSync(DB_PATH)) {
       const initial = { users: [], forms: [], responses: [], notifications: [], resetTokens: [], nextId: 1 };
-      fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
+      if (!isVercel) fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
       return initial;
     }
     const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
     if (!db.notifications) db.notifications = [];
     if (!db.resetTokens) db.resetTokens = [];
     return db;
-  } catch {
+  } catch (err) {
     return { users: [], forms: [], responses: [], notifications: [], resetTokens: [], nextId: 1 };
   }
 }
 
 function saveDB(db) {
-  if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+  if (isVercel) return; // Cannot save to disk on Vercel
+  try {
+    if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+  } catch (e) {}
 }
 
 function genId(db) {

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS forms (
   description TEXT DEFAULT '',
   emoji TEXT DEFAULT '📋',
   fields JSONB DEFAULT '[]'::jsonb,
-  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'trash')),
   theme_color TEXT DEFAULT '#7c3aed',
   webhook_url TEXT DEFAULT '',
   conditional_rules JSONB DEFAULT '[]'::jsonb,

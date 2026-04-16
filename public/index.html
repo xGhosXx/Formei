@@ -155,8 +155,8 @@
     }
 
     /* ========== Views ========== */
-    .view { display: none; width: 100%; height: 100%; }
-    .view.active { display: flex; }
+    .view { display: none !important; width: 100%; height: 100%; flex-shrink: 0; }
+    .view.active { display: flex !important; }
 
     /* ========== Sidebar ========== */
     .sidebar {
@@ -1612,6 +1612,51 @@
       font-weight: 600;
       font-size: 14px;
     }
+    .db-card-footer {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      position: relative;
+    }
+    .db-card-menu-btn {
+      color: var(--text-muted);
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+    }
+    .db-card-menu-btn:hover { background: var(--bg-surface-3); color: white; }
+    
+    .db-card-menu {
+      position: absolute;
+      bottom: calc(100% + 5px);
+      right: 0;
+      background: #18181b;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      display: none;
+      flex-direction: column;
+      min-width: 150px;
+      z-index: 999;
+      overflow: hidden;
+      animation: fadeIn var(--transition-fast);
+    }
+    .db-card-menu.active { display: flex; }
+    .db-card-menu-item {
+      padding: 10px 14px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+    .db-card-menu-item:hover { background: var(--bg-surface-2); color: white; }
+    .db-card-menu-item.danger { color: var(--red); }
+    .db-card-menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); }
     .settings-header-actions { display: flex; gap: 4px; }
     
     .settings-tabs {
@@ -2489,7 +2534,7 @@
     /* =========================================================================
        DASHBOARD PREMIUM REDESIGN (forms.app style)
        ========================================================================= */
-    .db-flex-col { display: flex; flex-direction: column; height: 100%; width: 100%; background: #16161c; }
+    .db-flex-col { flex-direction: column; height: 100%; width: 100%; background: #16161c; }
     
     /* GLOBAL HEADER */
     .db-global-header {
@@ -2907,7 +2952,7 @@
   <div id="app-container" style="display: none;">
 
     <!-- ============ VIEW: DASHBOARD ============ -->
-    <div id="view-dashboard" class="view active db-flex-col">
+    <div id="view-dashboard" class="view db-flex-col">
       <!-- GLOBAL TOPBAR -->
       <header class="db-global-header">
         <div class="db-logo">
@@ -2975,7 +3020,7 @@
                 <span>Arquivo</span>
               </div>
             </li>
-            <li class="db-nav-item" onclick="showToast('Lixeira vazia', 'info')">
+            <li class="db-nav-item" data-nav="trash" onclick="switchNav(this, 'trash')">
               <div class="db-nav-left">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 <span>Lixeira</span>
@@ -3823,6 +3868,7 @@
       formDesc: '',
       responses: {},
       notifications: [],
+      currentNav: 'forms',
       unreadCount: 0,
       conditionalRules: [],
       webhookUrl: '',
@@ -3953,8 +3999,10 @@
     }
 
     function switchNav(el, type) {
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      el.classList.add('active');
+      document.querySelectorAll('.db-nav-item').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+      state.currentNav = type;
+      renderDashboard();
     }
 
     // ==================== MODALS ====================
@@ -3968,6 +4016,8 @@
     }
 
     function openTemplatesModal() {
+      // Close other modals first
+      closeModal('create-modal');
       renderTemplates('Todos');
       document.getElementById('templates-modal').classList.add('active');
     }
@@ -4486,8 +4536,32 @@
       // Field items
       const fieldItems = paper.querySelectorAll('.field-item');
       fieldItems.forEach(fi => {
+        fi.style.background = d.cardBg;
         fi.style.borderColor = d.inputBorder;
         fi.style.fontFamily = `'${d.fontFamily}', sans-serif`;
+        
+        const labelEl = fi.querySelector('.field-item-label');
+        if (labelEl) labelEl.style.color = d.textColor;
+        
+        const reqEl = fi.querySelector('.required-dot');
+        if (reqEl) reqEl.style.color = d.primaryColor;
+
+        // Mock inputs and options
+        fi.querySelectorAll('.field-mock-input, .field-mock-date, .field-mock-select, .field-mock-file').forEach(inp => {
+          inp.style.background = d.inputBg;
+          inp.style.borderColor = d.inputBorder;
+          inp.style.color = d.textColor;
+        });
+
+        fi.querySelectorAll('.field-mock-option').forEach(opt => {
+          opt.style.color = d.textColor;
+        });
+
+        fi.querySelectorAll('.scale-num').forEach(num => {
+          num.style.background = d.inputBg;
+          num.style.borderColor = d.inputBorder;
+          num.style.color = d.textColor;
+        });
       });
 
       // Field spacing
@@ -5347,6 +5421,7 @@
     let editForm = async function(formId) {};
     let deleteForm = async function(formId, e) {};
     let duplicateForm = async function(formId, e) {};
+    let restoreForm = async function(formId) {};
     let exportCSV = async function(formId) {};
 
     function renderDashboard() {
@@ -5356,15 +5431,25 @@
       const statsRow = document.getElementById('stats-row');
       
       const searchQuery = document.getElementById('search-input')?.value?.toLowerCase() || '';
-      const filteredForms = state.forms.filter(f => (f.title||'').toLowerCase().includes(searchQuery));
+      
+      // Filter by status first
+      let formsByStatus = [];
+      if (state.currentNav === 'trash') {
+        formsByStatus = state.forms.filter(f => f.status === 'trash');
+      } else {
+        formsByStatus = state.forms.filter(f => f.status !== 'trash');
+      }
 
-      // Update stats
+      const filteredForms = formsByStatus.filter(f => (f.title||'').toLowerCase().includes(searchQuery));
+
+      // Update stats based on active (non-trash) forms
+      const activeForms = state.forms.filter(f => f.status !== 'trash');
       const totalResponses = Object.values(state.responses).reduce((sum, r) => sum + r.length, 0);
-      const totalViews = state.forms.reduce((sum, f) => sum + (f.views || 0), 0);
+      const totalViews = activeForms.reduce((sum, f) => sum + (f.views || 0), 0);
       const avgRate = totalViews > 0 ? Math.round((totalResponses / totalViews) * 100) : 0;
       
       const statForms = document.getElementById('stat-forms');
-      if (statForms) statForms.textContent = state.forms.length;
+      if (statForms) statForms.textContent = activeForms.length;
       const statResponses = document.getElementById('stat-responses');
       if (statResponses) statResponses.textContent = totalResponses;
       const statViews = document.getElementById('stat-views');
@@ -5377,9 +5462,11 @@
         if (listContainer) listContainer.style.display = 'none';
         if (empty) {
           empty.style.display = 'flex';
-          empty.querySelector('.empty-text').textContent = searchQuery ? 'Nenhum formulário encontrado' : 'Nenhum formulário criado';
+          empty.querySelector('.empty-text').textContent = state.currentNav === 'trash' 
+            ? 'Lixeira vazia' 
+            : (searchQuery ? 'Nenhum formulário encontrado' : 'Nenhum formulário criado');
         }
-        if (statsRow) statsRow.style.display = state.forms.length > 0 ? 'flex' : 'none';
+        if (statsRow) statsRow.style.display = activeForms.length > 0 ? 'flex' : 'none';
         return;
       }
 
@@ -5399,9 +5486,38 @@
               </div>
               <div class="db-card-footer">
                 <div class="db-card-responses">Respostas: <b>${form.responseCount || 0}</b></div>
-                <button class="db-card-menu-btn" onclick="event.stopPropagation(); deleteForm('${form.id}', event)">
+                <button class="db-card-menu-btn" onclick="event.stopPropagation(); toggleCardMenu('${form.id}')">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                 </button>
+                <div id="menu-${form.id}" class="db-card-menu">
+                  ${state.currentNav === 'trash' ? `
+                    <div class="db-card-menu-item" onclick="event.stopPropagation(); restoreForm('${form.id}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                      Restaurar
+                    </div>
+                    <div class="db-card-menu-item danger" onclick="event.stopPropagation(); deleteForm('${form.id}', event)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      Excluir Permanente
+                    </div>
+                  ` : `
+                    <div class="db-card-menu-item" onclick="event.stopPropagation(); editForm('${form.id}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                      Editar
+                    </div>
+                    <div class="db-card-menu-item" onclick="event.stopPropagation(); viewResponses('${form.id}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                      Respostas
+                    </div>
+                    <div class="db-card-menu-item" onclick="event.stopPropagation(); duplicateForm('${form.id}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                      Duplicar
+                    </div>
+                    <div class="db-card-menu-item danger" onclick="event.stopPropagation(); deleteForm('${form.id}', event)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      Excluir
+                    </div>
+                  `}
+                </div>
               </div>
             </div>
           `).join('');
@@ -5568,6 +5684,7 @@
       updateUserUI(user);
       loadFormsFromAPI();
       loadNotifications();
+      goToDashboard();
     }
 
     function updateUserUI(user) {
@@ -5620,9 +5737,13 @@
           _dbId: f.id
         }));
 
-        // Load response counts
+        // Load response counts ONLY for active forms
         state.responses = {};
         for (const form of state.forms) {
+          if (form.status === 'trash') {
+            state.responses[form.id] = [];
+            continue;
+          }
           const { data: responses } = await supabaseClient
           .from('responses')
             .select('*')
@@ -5632,16 +5753,17 @@
           form.responseCount = state.responses[form.id].length;
         }
 
-        // Update stats safely
-        const totalForms = state.forms.length;
-        const totalResponses = Object.values(state.responses).reduce((sum, r) => sum + r.length, 0);
+        // Update stats — exclude trashed forms
+        const activeForms = (state.forms || []).filter(f => f.status !== 'trash');
+        const totalForms = activeForms.length;
+        const totalResponses = activeForms.reduce((sum, f) => sum + (state.responses[f.id]?.length || 0), 0);
         
         const sf = document.getElementById('stat-forms');
         if (sf) sf.textContent = totalForms;
         const sr = document.getElementById('stat-responses');
         if (sr) sr.textContent = totalResponses;
         const sv = document.getElementById('stat-views');
-        if (sv) sv.textContent = state.forms.reduce((sum, f) => sum + (f.views || 0), 0);
+        if (sv) sv.textContent = activeForms.reduce((sum, f) => sum + (f.views || 0), 0);
         
         const badge = document.getElementById('nav-forms-count');
         if (badge) badge.textContent = `(${totalForms})`;
@@ -5717,15 +5839,83 @@
     const _origDeleteForm = deleteForm;
     deleteForm = async function(formId, e) {
       if (e) e.stopPropagation();
-      try {
-        const { error } = await supabaseClient.from('forms').delete().eq('id', formId);
-        if (error) throw error;
-        showToast('Formulário removido', 'success');
-        await loadFormsFromAPI();
-      } catch (err) {
-        showToast('Erro ao remover: ' + err.message, 'error');
+      
+      const form = state.forms.find(f => f.id == formId);
+      if (!form) return;
+
+      if (form.status === 'trash') {
+        if (!confirm('DESEJA EXCLUIR PERMANENTEMENTE?\nEsta ação apagará todos os dados e respostas para sempre.')) return;
+        try {
+          const { error } = await supabaseClient.from('forms').delete().eq('id', formId);
+          if (error) throw error;
+          showToast('Formulário apagado para sempre', 'success');
+          await loadFormsFromAPI();
+        } catch (err) {
+          showToast('Erro ao apagar: ' + err.message, 'error');
+        }
+      } else {
+        if (!confirm('Mover para a lixeira?')) return;
+        try {
+          const { error } = await supabaseClient.from('forms').update({ status: 'trash' }).eq('id', formId);
+          if (error) throw error;
+          showToast('Formulário movido para a lixeira', 'info');
+          await loadFormsFromAPI();
+        } catch (err) {
+          showToast('Erro ao mover: ' + err.message, 'error');
+        }
       }
     };
+
+    restoreForm = async function(formId) {
+      if (!formId) return;
+      try {
+        const { error } = await supabaseClient.from('forms').update({ status: 'published' }).eq('id', formId);
+        if (error) throw error;
+        showToast('Formulário restaurado!', 'success');
+        await loadFormsFromAPI();
+      } catch (err) {
+        showToast('Erro ao restaurar: ' + err.message, 'error');
+      }
+    };
+
+    duplicateForm = async function(formId) {
+      if (!formId) return;
+      try {
+        const { data, error: fetchError } = await supabaseClient.from('forms').select('*').eq('id', formId).single();
+        if (fetchError) throw fetchError;
+
+        const { error: insertError } = await supabaseClient.from('forms').insert({
+          user_id: data.user_id,
+          title: data.title + ' (Cópia)',
+          description: data.description,
+          emoji: data.emoji,
+          fields: data.fields,
+          conditional_rules: data.conditional_rules,
+          theme_color: data.theme_color,
+          status: 'published'
+        });
+        if (insertError) throw insertError;
+        
+        showToast('Formulário duplicado!', 'success');
+        await loadFormsFromAPI();
+      } catch (err) {
+        showToast('Erro ao duplicar: ' + err.message, 'error');
+      }
+    };
+
+    function toggleCardMenu(formId) {
+      // Close all other menus
+      document.querySelectorAll('.db-card-menu').forEach(m => {
+        if (m.id !== 'menu-' + formId) m.classList.remove('active');
+      });
+      const menu = document.getElementById('menu-' + formId);
+      if (menu) menu.classList.toggle('active');
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.db-card-menu').forEach(m => m.classList.remove('active'));
+    });
 
     // ==================== EDIT FORM (Supabase) ====================
     const _origEditForm = editForm;

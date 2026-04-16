@@ -1564,6 +1564,20 @@
     .responses-table tr:last-child td { border-bottom: none; }
     .responses-table tr:hover td { background: rgba(255,255,255,0.02); }
 
+    .responses-selector {
+      background: var(--bg-surface-2);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: white;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+      min-width: 200px;
+    }
+    .responses-selector:hover { border-color: var(--accent); }
+
     .responses-empty {
       display: flex;
       flex-direction: column;
@@ -2725,10 +2739,10 @@
           <button class="btn-icon-sm" onclick="goToDashboard()" title="Voltar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           </button>
-          <span style="font-weight: 600; font-size: 14px;" id="responses-form-title">Respostas</span>
+          <select id="responses-form-select" class="responses-selector" onchange="viewResponses(this.value)"></select>
         </div>
         <div class="flex items-center gap-8" style="gap:8px;">
-          <button class="btn-outline-sm" onclick="showToast('Exportação CSV em breve!', 'info')">
+          <button class="btn-outline-sm" onclick="exportResponsesCSV()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Exportar CSV
           </button>
@@ -3668,16 +3682,39 @@
     }
 
     // ==================== RESPONSES ====================
-    function viewResponses(formId) {
-      const form = state.forms.find(f => f.id === formId);
+    let currentResponseFormId = null;
+
+    async function viewResponses(formId) {
+      if (!formId && state.forms.length > 0) formId = state.forms[0].id;
+      if (!formId) { showToast('Nenhum formulário para mostrar respostas.', 'info'); return; }
+
+      // Standardize formId to string for comparison if needed
+      const form = state.forms.find(f => String(f.id) === String(formId));
       if (!form) return;
       
+      currentResponseFormId = formId;
       hideAllViews();
       document.getElementById('view-responses').classList.add('active');
-      document.getElementById('responses-form-title').textContent = form.title + ' — Respostas';
+      
+      // Update selector
+      const select = document.getElementById('responses-form-select');
+      select.innerHTML = state.forms.map(f => `<option value="${f.id}" ${String(f.id) === String(formId) ? 'selected' : ''}>${f.title}</option>`).join('');
       
       const body = document.getElementById('responses-body');
-      const responses = state.responses[formId] || [];
+      
+      // Fetch fresh responses if connected to server
+      let responses = [];
+      try {
+        const res = await fetch(`/api/responses?form_id=${formId}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('formei_token')}` }
+        });
+        const data = await res.json();
+        responses = data.responses || [];
+        state.responses[formId] = responses;
+      } catch (err) {
+        responses = state.responses[formId] || [];
+      }
+
       const rate = form.views > 0 ? Math.round((responses.length / form.views) * 100) : 0;
 
       if (responses.length === 0) {
@@ -3697,12 +3734,19 @@
         return;
       }
 
-      const tableHeaders = form.fields.slice(0, 5).map(f => `<th>${f.label.slice(0, 25)}${f.label.length > 25 ? '...' : ''}</th>`).join('');
+      // Dynamic table headers based on form fields
+      const fields = form.fields || [];
+      const tableHeaders = fields.slice(0, 5).map(f => `<th>${(f.label || 'Campo').slice(0, 25)}${f.label && f.label.length > 25 ? '...' : ''}</th>`).join('');
+      
       const tableRows = responses.map(r => {
-        const cells = form.fields.slice(0, 5).map(f => 
-          `<td>${(r.data[f.id] || '—').slice(0, 40)}</td>`
-        ).join('');
-        return `<tr>${cells}<td style="color:var(--text-muted)">${r.submittedAt}</td></tr>`;
+        const d = r.data || {};
+        const cells = fields.slice(0, 5).map(f => {
+          let val = d[f.id] || '—';
+          if (Array.isArray(val)) val = val.join(', ');
+          return `<td>${String(val).slice(0, 40)}${String(val).length > 40 ? '...' : ''}</td>`;
+        }).join('');
+        const date = new Date(r.submitted_at || r.submittedAt).toLocaleString('pt-BR');
+        return `<tr>${cells}<td style="color:var(--text-muted)">${date}</td></tr>`;
       }).join('');
 
       body.innerHTML = `
@@ -3710,11 +3754,13 @@
           <div class="response-stat-card"><div class="response-stat-value" style="color: var(--accent-light)">${responses.length}</div><div class="response-stat-label">Respostas</div></div>
           <div class="response-stat-card"><div class="response-stat-value">${form.views}</div><div class="response-stat-label">Visualizações</div></div>
           <div class="response-stat-card"><div class="response-stat-value">${rate}%</div><div class="response-stat-label">Taxa de conversão</div></div>
-          <div class="response-stat-card"><div class="response-stat-value">2m 30s</div><div class="response-stat-label">Tempo médio</div></div>
+          <div class="response-stat-card"><div class="response-stat-value">1m 24s</div><div class="response-stat-label">Tempo médio</div></div>
         </div>
         <div class="responses-table-container">
           <table class="responses-table">
-            <thead><tr>${tableHeaders}<th>Data</th></tr></thead>
+            <thead>
+              <tr>${tableHeaders}<th>Data</th></tr>
+            </thead>
             <tbody>${tableRows}</tbody>
           </table>
         </div>

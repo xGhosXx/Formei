@@ -881,7 +881,7 @@
     #view-builder { flex-direction: column; }
 
     .builder-topbar {
-      height: 56px;
+      height: 48px;
       background: var(--bg-surface-1);
       border-bottom: 1px solid var(--border-color);
       display: flex;
@@ -890,9 +890,38 @@
       padding: 0 16px;
       flex-shrink: 0;
       z-index: 20;
+      position: relative;
     }
     .topbar-left, .topbar-center, .topbar-right { display: flex; align-items: center; gap: 8px; }
-    .topbar-center { position: absolute; left: 50%; transform: translateX(-50%); }
+    .topbar-left { max-width: 220px; overflow: hidden; z-index: 1; }
+    .topbar-center { position: absolute; left: 50%; transform: translateX(-50%); z-index: 2; }
+    .topbar-right { z-index: 1; }
+
+    /* Breadcrumb */
+    .builder-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .builder-breadcrumb a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color var(--transition-fast);
+      cursor: pointer;
+    }
+    .builder-breadcrumb a:hover { color: white; }
+    .builder-breadcrumb .breadcrumb-sep { font-size: 11px; opacity: 0.4; }
+    .builder-breadcrumb .breadcrumb-current {
+      color: var(--text-secondary);
+      font-weight: 500;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .btn-icon-sm {
       color: var(--text-muted);
       padding: 8px;
@@ -915,33 +944,51 @@
       border-radius: var(--radius-sm);
       width: 220px;
       transition: all var(--transition-fast);
+      display: none;
     }
     .form-title-input:hover { border-color: var(--border-color); }
     .form-title-input:focus { border-color: var(--accent); background: var(--bg-surface-2); }
 
+    /* Builder topbar tabs with icons */
     .builder-tabs {
       display: flex;
-      background: var(--bg-surface-2);
-      border-radius: var(--radius-md);
-      padding: 3px;
-      gap: 2px;
+      gap: 0;
     }
     .builder-tab {
-      padding: 6px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
+      padding: 12px 20px;
+      font-size: 12px;
       font-weight: 500;
       color: var(--text-muted);
       transition: all var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      position: relative;
+      letter-spacing: 0.01em;
     }
+    .builder-tab svg { width: 18px; height: 18px; margin-bottom: 1px; }
     .builder-tab:hover { color: var(--text-secondary); }
-    .builder-tab.active { background: var(--bg-surface-4); color: white; }
+    .builder-tab.active {
+      color: var(--accent-light);
+    }
+    .builder-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+    }
 
     .btn-outline-sm {
       background: var(--bg-surface-2);
       color: var(--text-secondary);
       border: 1px solid var(--border-color);
-      padding: 7px 16px;
+      padding: 7px 12px;
       border-radius: var(--radius-sm);
       font-weight: 500;
       font-size: 13px;
@@ -969,16 +1016,155 @@
     /* Builder layout */
     .builder-body { display: flex; flex: 1; overflow: hidden; }
 
-    /* Left panel - field palette */
+    /* ===== Icon Bar (narrow left strip) ===== */
+    .builder-icon-bar {
+      width: 60px;
+      min-width: 60px;
+      background: var(--bg-surface-1);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0;
+      gap: 4px;
+    }
+    .icon-bar-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all var(--transition-fast);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .icon-bar-btn svg { width: 20px; height: 20px; }
+    .icon-bar-btn:hover { color: var(--text-secondary); background: var(--bg-surface-2); }
+    .icon-bar-btn.active {
+      color: var(--accent-light);
+      background: rgba(124, 58, 237, 0.12);
+    }
+
+    /* ===== Left panel - field palette (list style) ===== */
     .builder-panel-left {
-      width: 280px;
-      min-width: 280px;
+      width: 220px;
+      min-width: 220px;
       background: var(--bg-surface-1);
       border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
     }
+
+    /* Search box in sidebar */
+    .sidebar-search {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .sidebar-search-input {
+      width: 100%;
+      background: var(--bg-surface-2);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 7px 10px 7px 32px;
+      color: white;
+      font-size: 12px;
+      transition: border-color var(--transition-fast);
+      position: relative;
+    }
+    .sidebar-search-input:focus { border-color: var(--accent); }
+    .sidebar-search-input::placeholder { color: var(--text-muted); }
+    .sidebar-search-wrap {
+      position: relative;
+    }
+    .sidebar-search-wrap svg {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Field category header */
+    .field-category {
+      padding: 0;
+    }
+    .field-category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .field-category-header:hover { background: var(--bg-surface-2); }
+    .field-category-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .field-category-chevron {
+      color: var(--text-muted);
+      width: 14px;
+      height: 14px;
+      transition: transform var(--transition-fast);
+    }
+    .field-category.collapsed .field-category-chevron { transform: rotate(-90deg); }
+    .field-category.collapsed .field-category-items { display: none; }
+
+    /* Field items in list format */
+    .field-category-items {
+      display: flex;
+      flex-direction: column;
+    }
+    .field-list-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px 8px 16px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 450;
+      transition: all var(--transition-fast);
+      border-left: 2px solid transparent;
+    }
+    .field-list-item:hover {
+      background: var(--bg-surface-2);
+      color: white;
+      border-left-color: var(--accent);
+    }
+    .field-list-item:active { transform: scale(0.98); }
+    .field-list-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .field-list-icon svg { width: 15px; height: 15px; }
+    .field-list-icon.purple { background: rgba(124, 58, 237, 0.15); color: var(--accent-light); }
+    .field-list-icon.blue { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+    .field-list-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+    .field-list-icon.pink { background: rgba(236, 72, 153, 0.15); color: var(--pink); }
+    .field-list-icon.amber { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
+    .field-list-icon.cyan { background: rgba(6, 182, 212, 0.15); color: var(--cyan); }
+    .field-list-icon.red { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+
     /* Design Panel */
     .design-panel { overflow-y: auto; }
     .design-row {
@@ -1136,10 +1322,10 @@
     .element-btn svg { width: 22px; height: 22px; }
     .element-btn span { font-size: 11px; text-align: center; font-weight: 500; }
 
-    /* Canvas */
+    /* Canvas - Light theme */
     .builder-canvas {
       flex: 1;
-      background: var(--bg-base);
+      background: #eeedf1;
       overflow-y: auto;
       padding: 32px;
       display: flex;
@@ -1151,8 +1337,8 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.03) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.02) 0%, transparent 50%);
+        radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.03) 0%, transparent 50%);
       pointer-events: none;
     }
     .canvas-frame {
@@ -1163,34 +1349,39 @@
       z-index: 1;
     }
     .canvas-paper {
-      background: var(--bg-surface-1);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-xl);
+      background: #ffffff;
+      border: 1px solid #e0dfe3;
+      border-radius: 16px;
       padding: 40px;
       min-height: 100%;
-      box-shadow: var(--shadow-lg);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
     }
-    .canvas-form-header { margin-bottom: 32px; }
+    .canvas-form-header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
     .canvas-form-title {
-      font-size: 28px;
-      font-weight: 800;
+      font-size: 22px;
+      font-weight: 700;
       background: transparent;
       border: none;
-      color: white;
+      color: #1a1a2e;
       width: 100%;
       outline: none;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
+      text-align: center;
     }
     .canvas-form-desc {
-      font-size: 15px;
-      color: var(--text-muted);
+      font-size: 14px;
+      color: #71717a;
       background: transparent;
       border: none;
       width: 100%;
       outline: none;
-      margin-top: 8px;
+      margin-top: 6px;
       resize: none;
       line-height: 1.5;
+      text-align: center;
     }
 
     .canvas-fields {
@@ -1201,36 +1392,36 @@
     }
     .canvas-placeholder {
       padding: 60px 40px;
-      border: 2px dashed rgba(255,255,255,0.06);
-      border-radius: var(--radius-lg);
+      border: 2px dashed #d4d4d8;
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: var(--text-muted);
+      color: #a1a1aa;
       text-align: center;
       gap: 12px;
       transition: all var(--transition-normal);
     }
-    .canvas-placeholder:hover { border-color: rgba(124, 58, 237, 0.2); }
-    .canvas-placeholder svg { width: 40px; height: 40px; opacity: 0.3; }
+    .canvas-placeholder:hover { border-color: var(--accent); }
+    .canvas-placeholder svg { width: 40px; height: 40px; opacity: 0.3; color: #71717a; }
     .canvas-placeholder span { font-size: 14px; }
 
-    /* Field item on canvas */
+    /* Field item on canvas (light theme) */
     .field-item {
-      background: var(--bg-surface-2);
-      border: 1px solid transparent;
-      border-radius: var(--radius-md);
+      background: #ffffff;
+      border: 1px solid #e0dfe3;
+      border-radius: 10px;
       padding: 20px;
       cursor: pointer;
       position: relative;
       transition: all var(--transition-fast);
       animation: slideUp 0.25s ease both;
     }
-    .field-item:hover { border-color: rgba(124, 58, 237, 0.3); }
+    .field-item:hover { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,58,237,0.08); }
     .field-item.selected {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
     }
     .field-item-header {
       display: flex;
@@ -1238,16 +1429,37 @@
       justify-content: space-between;
       margin-bottom: 10px;
     }
+    .field-item-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #f0eef5;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
     .field-item-label {
-      font-size: 15px;
-      font-weight: 500;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a2e;
     }
     .field-item-label .required-dot {
       color: var(--red);
       margin-left: 2px;
     }
+    .field-item-desc {
+      font-size: 12px;
+      color: #a1a1aa;
+      margin-bottom: 8px;
+      font-style: italic;
+    }
     .field-item-drag {
-      color: var(--text-muted);
+      color: #a1a1aa;
       cursor: grab;
       padding: 4px;
       opacity: 0;
@@ -1255,14 +1467,38 @@
     }
     .field-item:hover .field-item-drag { opacity: 1; }
     .field-item-drag:active { cursor: grabbing; }
+    .field-item-toolbar {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+    .field-item:hover .field-item-toolbar { opacity: 1; }
+    .field-item-toolbar button {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #71717a;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .field-item-toolbar button:hover { background: #f0eef5; color: #1a1a2e; }
 
     .field-mock-input {
       width: 100%;
       padding: 10px 14px;
-      background: var(--bg-surface-3);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      color: var(--text-muted);
+      background: #ffffff;
+      border: 1px solid #d4d4d8;
+      border-radius: 6px;
+      color: #a1a1aa;
       font-size: 14px;
       pointer-events: none;
     }
@@ -1276,30 +1512,30 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      color: var(--text-muted);
+      color: #52525b;
       font-size: 14px;
     }
     .option-circle {
       width: 18px;
       height: 18px;
-      border: 2px solid var(--border-hover);
+      border: 2px solid #d4d4d8;
       border-radius: 50%;
       flex-shrink: 0;
     }
     .option-square {
       width: 18px;
       height: 18px;
-      border: 2px solid var(--border-hover);
+      border: 2px solid #d4d4d8;
       border-radius: 4px;
       flex-shrink: 0;
     }
     .field-mock-select {
       width: 100%;
       padding: 10px 14px;
-      background: var(--bg-surface-3);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      color: var(--text-muted);
+      background: #ffffff;
+      border: 1px solid #d4d4d8;
+      border-radius: 6px;
+      color: #a1a1aa;
       font-size: 14px;
       display: flex;
       align-items: center;
@@ -1321,23 +1557,23 @@
     .scale-num {
       width: 36px;
       height: 36px;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
+      border: 1px solid #d4d4d8;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 13px;
-      color: var(--text-muted);
+      color: #71717a;
     }
     .field-mock-date, .field-mock-file {
       display: flex;
       align-items: center;
       gap: 10px;
       padding: 10px 14px;
-      background: var(--bg-surface-3);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      color: var(--text-muted);
+      background: #ffffff;
+      border: 1px solid #d4d4d8;
+      border-radius: 6px;
+      color: #a1a1aa;
       font-size: 14px;
     }
     .field-mock-file {
@@ -1354,22 +1590,18 @@
       min-width: 320px;
       background: var(--bg-surface-1);
       border-left: 1px solid var(--border-color);
-      display: flex;
+      display: none;
       flex-direction: column;
       overflow-y: auto;
-      transform: translateX(100%);
-      transition: transform var(--transition-slow);
-      position: absolute;
-      right: 0;
-      top: 56px;
-      bottom: 0;
       z-index: 15;
     }
     .builder-panel-right.active {
-      transform: translateX(0);
-      position: relative;
-      top: auto;
-      bottom: auto;
+      display: flex;
+      animation: slideInRight 0.3s ease;
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
     .settings-header {
       padding: 16px 20px;
@@ -2254,10 +2486,235 @@
     .flex { display: flex; }
     .flex-col { flex-direction: column; }
     .items-center { align-items: center; }
-    .justify-between { justify-content: space-between; }
+    /* =========================================================================
+       DASHBOARD PREMIUM REDESIGN (forms.app style)
+       ========================================================================= */
+    .db-flex-col { display: flex; flex-direction: column; height: 100%; width: 100%; background: #16161c; }
+    
+    /* GLOBAL HEADER */
+    .db-global-header {
+      height: 60px;
+      min-height: 60px;
+      background: #09090b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      z-index: 50;
+    }
+    .db-logo { display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; }
+    .db-logo svg { color: white; }
+    .db-header-actions { display: flex; align-items: center; gap: 16px; min-width: 150px; justify-content: flex-end; }
+    .db-btn-upgrade {
+      background: rgba(85, 82, 255, 0.2);
+      color: #928fff;
+      border: 1px solid rgba(85, 82, 255, 0.4);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .db-btn-upgrade:hover { background: rgba(85, 82, 255, 0.3); }
+    .user-profile-menu { position: relative; cursor: pointer; }
+    .user-avatar {
+      width: 34px; height: 34px; border-radius: 50%; background: #2f2f37; color: white;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;
+      border: 2px solid #5552ff;
+    }
+    #db-user-menu {
+      position: absolute; right: 0; top: 120%; background: #1f1f25; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 180px; flex-direction: column; overflow: hidden;
+    }
+    .db-menu-item { padding: 12px 16px; font-size: 13px; color: #a1a1aa; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+    .db-menu-item:hover { background: #2f2f37; color: white; }
+    .db-menu-item.red:hover { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+    
+    /* DASHBOARD BODY (SPLIT) */
+    .db-body { display: flex; flex: 1; overflow: hidden; background: #222226; }
+    
+    /* SIDEBAR */
+    .db-sidebar {
+      width: 260px; min-width: 260px; background: #09090b; display: flex; flex-direction: column; padding: 24px 16px;
+      border-right: 1px solid rgba(255,255,255,0.05); overflow-y: auto; height: 100%;
+    }
+    .db-btn-create {
+      background: #6b63ff; color: white; width: 100%; padding: 12px; border-radius: 6px;
+      font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; box-shadow: 0 4px 12px rgba(107, 99, 255, 0.3);
+      margin-bottom: 24px; text-align: center;
+    }
+    .db-btn-create:hover { background: #5a54df; transform: translateY(-1px); }
+    .db-nav { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+    .db-nav-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 16px 0; }
+    .db-nav-item {
+      display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;
+      border-radius: 6px; color: #a1a1aa; font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.2s;
+    }
+    .db-nav-left { display: flex; align-items: center; gap: 12px; }
+    .db-nav-left svg { color: inherit; }
+    .db-nav-item:hover { background: rgba(255,255,255,0.05); color: #e4e4e7; }
+    .db-nav-item.active { background: rgba(255,255,255,0.08); color: white; }
+    .db-nav-badge { font-size: 12px; color: rgba(255,255,255,0.4); }
+    
+    /* MAIN AREA */
+    .db-main-area { flex: 1; display: flex; flex-direction: column; padding: 32px 48px; overflow-y: auto; }
+    .db-main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    #dashboard-main-title { font-size: 24px; font-weight: 700; color: white; letter-spacing: -0.02em; margin: 0; }
+    
+    .db-main-actions { display: flex; align-items: center; gap: 12px; }
+    .db-search {
+      display: flex; align-items: center; gap: 8px; background: #1a1a1f; border: 1px solid rgba(255,255,255,0.1);
+      padding: 8px 12px; border-radius: 6px; width: 240px; transition: 0.2s;
+    }
+    .db-search:focus-within { border-color: rgba(255,255,255,0.3); background: #1f1f25; }
+    .db-search input { background: transparent; border: none; color: white; font-size: 13px; width: 100%; outline: none; }
+    .db-search input::placeholder { color: #71717a; }
+    .db-search svg { color: #d4d4d8; }
+    
+    .db-icon-btn, .db-icon-btn-group {
+      background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #d4d4d8; padding: 8px; border-radius: 6px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; height: 34px; min-width: 34px; transition: 0.2s;
+    }
+    .db-icon-btn:hover, .db-icon-btn-group:hover { background: rgba(255,255,255,0.05); }
+    .db-icon-btn-group { font-size: 13px; padding: 0 12px; font-weight: 500; }
+    .db-icon-btn-group.active { background: rgba(255,255,255,0.1); color: white; }
+    .db-divider { height: 1px; background: rgba(255,255,255,0.05); margin-bottom: 32px; width: 100%; }
+
+    /* FORM CARDS */
+    .forms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+    .db-form-card {
+      background: #18181c; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; cursor: pointer;
+      animation: dbFadeInUp 0.4s ease backwards; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .db-form-card:hover { background: #1d1d22; transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.1); }
+    .db-card-top { padding: 16px 16px 8px 16px; display: flex; justify-content: space-between; align-items:flex-start; color: #a1a1aa; }
+    .db-card-body { padding: 12px 16px 40px 16px; display:flex; align-items:center; justify-content:center; flex:1; }
+    .db-card-title { font-size: 14px; font-weight: 500; color: #e4e4e7; text-align: center; }
+    .db-card-footer {
+      display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.04); font-size: 13px; color: #a1a1aa; background: #16161a;
+    }
+    .db-card-responses b { color: white; font-weight: 600; margin-left: 2px;}
+    .db-card-menu-btn { background: transparent; border: none; color: #a1a1aa; cursor: pointer; display:flex; padding: 4px; border-radius: 4px; transition:0.2s; }
+    .db-card-menu-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
+    @keyframes dbFadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
     .text-sm { font-size: 13px; }
     .text-muted { color: var(--text-muted); }
 
+    /* =========================================================================
+       MOBILE RESPONSIVE BUILDER LAYOUT 
+       ========================================================================= */
+    @media (max-width: 900px) {
+      .builder-topbar {
+        height: auto;
+        flex-wrap: wrap;
+        padding: 12px 14px 0 14px;
+      }
+      .topbar-left { flex: 1; max-width: none; }
+      .topbar-right { flex-shrink: 0; }
+      .topbar-center {
+        position: relative;
+        left: 0;
+        transform: none;
+        width: 100%;
+        flex-basis: 100%;
+        order: 3;
+        overflow-x: auto;
+        margin-top: 10px;
+        padding-bottom: 2px;
+      }
+      .builder-tabs { width: max-content; }
+      .builder-tab { padding: 10px 16px; font-size: 13px; font-weight: 600; }
+      .builder-tab svg { display: none !important; }
+      
+      .desktop-text { display: none !important; }
+      .mobile-text { display: inline !important; }
+      .mobile-hide { display: none !important; }
+
+      .btn-primary-sm { padding: 8px 16px; background: #3b3b4f; color: white; border: 1px solid var(--border-color); border-radius: 20px;}
+      .btn-primary-sm:hover { background: var(--bg-surface-2); }
+
+      /* Bottom Navigation Bar */
+      .builder-icon-bar {
+        flex-direction: row;
+        width: 100%;
+        height: 60px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        z-index: 50;
+        border-right: none;
+        border-top: 1px solid var(--border-color);
+        justify-content: space-around;
+        padding: 0;
+        background: var(--bg-base);
+      }
+      .icon-bar-btn { width: 100%; height: 100%; font-size: 10px; border-radius: 0; gap: 4px; }
+      .icon-bar-btn.active { background: transparent; color: var(--accent-light); }
+      
+      /* Panels and Canvas */
+      .builder-body { position: relative; padding-bottom: 60px; }
+      .builder-canvas { padding: 16px 16px 80px 16px; }
+      .canvas-frame { min-width: 0; width: 100%; }
+
+      /* Floating Action Button */
+      .mobile-fab {
+        display: flex;
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: white;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+        z-index: 40;
+        cursor: pointer;
+      }
+      .mobile-fab svg { width: 24px; height: 24px; }
+
+      /* Left panel (Field palette) as a bottom sheet */
+      .builder-panel-left {
+        position: fixed;
+        bottom: 60px;
+        left: 0;
+        width: 100%;
+        max-height: 70vh;
+        z-index: 45;
+        border-right: none;
+        border-top: 1px solid var(--border-color);
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        display: none;
+        background: #09090b; /* base bg */
+      }
+      .builder-panel-left.mobile-open { display: flex; animation: slideUp 0.3s ease; }
+
+      /* Right panel as full screen mobile */
+      .builder-panel-right.active {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: calc(100% - 60px);
+        z-index: 60;
+      }
+
+      @keyframes slideUp {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+    }
   </style>
 </head>
 <body>
@@ -2450,144 +2907,133 @@
   <div id="app-container" style="display: none;">
 
     <!-- ============ VIEW: DASHBOARD ============ -->
-    <div id="view-dashboard" class="view active">
-      <aside class="sidebar">
-        <div class="logo">
-          <div class="logo-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-          </div>
-          Formei
+    <div id="view-dashboard" class="view active db-flex-col">
+      <!-- GLOBAL TOPBAR -->
+      <header class="db-global-header">
+        <div class="db-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span style="font-size:18px; font-weight:700; letter-spacing: -0.02em;">Formei</span>
         </div>
-
-        <button class="btn-create-form" onclick="openCreateModal()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Criar formulário
-        </button>
-
-        <div class="nav-section-label">Principal</div>
-        <ul class="nav-items">
-          <li class="nav-item active" data-nav="forms" onclick="switchNav(this, 'forms')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            Meus formulários
-          </li>
-          <li class="nav-item" data-nav="templates" onclick="switchNav(this, 'templates'); openTemplatesModal()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-            Modelos
-            <span class="nav-badge">12</span>
-          </li>
-        </ul>
-
-        <div class="nav-section-label" style="margin-top: 20px;">Gerenciar</div>
-        <ul class="nav-items">
-          <li class="nav-item" onclick="openSettings()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            Configurações
-          </li>
-          <li class="nav-item" onclick="openPlans()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            Planos
-          </li>
-        </ul>
-
-        <div class="sidebar-footer">
-          <div class="user-profile" onclick="const m=document.getElementById('user-menu'); m.style.display = m.style.display==='block'?'none':'block'">
-            <div class="user-avatar">U</div>
-            <div class="user-info">
-              <div class="user-name">Usuário</div>
-              <div class="user-plan">Plano Free</div>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted)"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div id="user-menu" style="display:none; padding: 8px 0; margin-top: 8px; border-top: 1px solid var(--border-color);">
-            <div class="nav-item" onclick="logout()" style="color: var(--red);">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-              Sair da conta
+        
+        <div class="db-header-actions">
+          <button class="db-btn-upgrade" onclick="openPlans()">Melhoria</button>
+          
+          <!-- User Menu -->
+          <div class="user-profile-menu" onclick="const m=document.getElementById('db-user-menu'); m.style.display = m.style.display==='block'?'none':'block'">
+            <div class="user-avatar" id="global-avatar">U</div>
+            <div id="db-user-menu" style="display:none;">
+              <div class="db-menu-item" onclick="openSettings()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9"></path></svg>
+                Configurações
+              </div>
+              <div class="db-menu-item red" onclick="logout()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Sair da conta
+              </div>
             </div>
           </div>
         </div>
-      </aside>
+      </header>
 
-      <main class="main-area">
-        <div class="dashboard-topbar">
-          <div class="dashboard-title-area">
-            <h1 id="dashboard-main-title">Meus Formulários</h1>
-            <p id="dashboard-subtitle">Gerencie e analise todos os seus formulários</p>
-          </div>
-          <div class="dashboard-actions">
-            <!-- Notification Bell -->
-            <div style="position:relative">
-              <button onclick="toggleNotifPanel()" style="padding:8px;border-radius:var(--radius-md);background:var(--bg-surface-2);border:1px solid var(--border-color);color:var(--text-muted);cursor:pointer;position:relative">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:white;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center">0</span>
+      <div class="db-body">
+        <aside class="db-sidebar">
+          <button class="db-btn-create" onclick="openCreateModal()">
+            Criar um novo formulário
+          </button>
+          
+          <ul class="db-nav">
+            <li class="db-nav-item active" data-nav="forms" onclick="switchNav(this, 'forms')">
+              <div class="db-nav-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                <span>Meus formulários</span>
+              </div>
+              <span class="db-nav-badge" id="nav-forms-count">0</span>
+            </li>
+            <li class="db-nav-item" onclick="showToast('Em breve', 'info')">
+              <div class="db-nav-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <span>Criar uma nova pasta</span>
+              </div>
+            </li>
+
+            <div class="db-nav-divider"></div>
+
+            <li class="db-nav-item" data-nav="templates" onclick="switchNav(this, 'templates'); openTemplatesModal()">
+              <div class="db-nav-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                <span>Modelos</span>
+              </div>
+            </li>
+            <li class="db-nav-item" onclick="showToast('Em breve', 'info')">
+              <div class="db-nav-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Arquivo</span>
+              </div>
+            </li>
+            <li class="db-nav-item" onclick="showToast('Lixeira vazia', 'info')">
+              <div class="db-nav-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <span>Lixeira</span>
+              </div>
+            </li>
+          </ul>
+
+          <div style="flex-grow: 1;"></div>
+          
+          <ul class="db-nav">
+            <li class="db-nav-item" onclick="showToast('Em breve', 'info')">
+              <div class="db-nav-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>Membros do time</span>
+              </div>
+            </li>
+            <li class="db-nav-item" onclick="showToast('Em breve', 'info')">
+              <div class="db-nav-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                <span>Minhas inscrições</span>
+              </div>
+            </li>
+          </ul>
+        </aside>
+
+        <!-- MAIN WORKSPACE -->
+        <main class="db-main-area">
+          <div class="db-main-header">
+            <h1 id="dashboard-main-title">Meus formulários</h1>
+            
+            <div class="db-main-actions">
+              <!-- Search Box mapping to filterForms -->
+              <div class="db-search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="search-input" placeholder="Buscar..." oninput="filterForms()">
+              </div>
+
+              <!-- Action Icons -->
+              <button class="db-icon-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
               </button>
-              <div id="notif-panel" style="display:none;position:absolute;right:0;top:100%;margin-top:8px;width:360px;background:var(--bg-surface-1);border:1px solid var(--border-color);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:100;max-height:400px;overflow-y:auto">
-                <div style="padding:14px 16px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center">
-                  <span style="font-weight:600;font-size:14px">Notificações</span>
-                  <button onclick="markAllNotifsRead()" style="font-size:12px;color:var(--accent-light);cursor:pointer;background:none;border:none;font-family:inherit;">Marcar todas como lidas</button>
-                </div>
-                <div id="notif-list"></div>
-              </div>
-            </div>
-            <div class="search-box">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" placeholder="Buscar formulários..." id="search-input" oninput="filterForms()">
-            </div>
-            <div class="view-toggle">
-              <button class="active" id="grid-view-btn" onclick="setViewMode('grid')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <button class="db-icon-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
               </button>
-              <button id="list-view-btn" onclick="setViewMode('list')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <button class="db-icon-btn-group" id="list-view-btn" onclick="setViewMode('list')" style="display:flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                Lista
+              </button>
+              <button class="db-icon-btn-group" id="grid-view-btn" onclick="setViewMode('grid')" style="display:flex; align-items:center; gap:6px;">
+                Rede
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
               </button>
             </div>
           </div>
-        </div>
 
-        <div class="stats-row" id="stats-row">
-          <div class="stat-card">
-            <div class="stat-card-header">
-              <div class="stat-icon purple">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-              </div>
-            </div>
-            <div class="stat-value" id="stat-forms">0</div>
-            <div class="stat-label">Formulários</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-card-header">
-              <div class="stat-icon green">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              </div>
-            </div>
-            <div class="stat-value" id="stat-responses">0</div>
-            <div class="stat-label">Respostas totais</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-card-header">
-              <div class="stat-icon blue">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              </div>
-            </div>
-            <div class="stat-value" id="stat-views">0</div>
-            <div class="stat-label">Visualizações</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-card-header">
-              <div class="stat-icon amber">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-              </div>
-            </div>
-            <div class="stat-value" id="stat-rate">0%</div>
-            <div class="stat-label">Taxa de conversão</div>
-          </div>
-        </div>
+          <div class="db-divider"></div>
 
-        <div class="dashboard-content">
+          <div class="db-content-area">
           <div id="forms-grid-container" class="forms-grid"></div>
           <div id="forms-list-container" class="forms-list" style="display:none;"></div>
           <div id="empty-state" class="empty-state">
@@ -2606,8 +3052,9 @@
               Criar primeiro formulário
             </button>
           </div>
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
 
     <!-- ============ CREATE MODAL ============ -->
@@ -2751,31 +3198,69 @@
     <div id="view-builder" class="view">
       <div class="builder-topbar">
         <div class="topbar-left">
-          <button class="btn-icon-sm" onclick="goToDashboard()" title="Voltar ao Dashboard">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          </button>
+          <div class="builder-breadcrumb">
+            <a onclick="goToDashboard()">Meus formulários</a>
+            <span class="breadcrumb-sep">›</span>
+            <span class="breadcrumb-current" id="builder-breadcrumb-title">Formulário sem título</span>
+          </div>
           <input type="text" class="form-title-input" id="builder-form-title" value="Formulário sem título">
         </div>
         <div class="topbar-center">
           <div class="builder-tabs">
-            <button class="builder-tab active" onclick="switchBuilderTab(this, 'build')">Construir</button>
-            <button class="builder-tab" onclick="switchBuilderTab(this, 'design')">Design</button>
-            <button class="builder-tab" onclick="switchBuilderTab(this, 'settings')">Configurações</button>
+            <button class="builder-tab active" onclick="switchBuilderTab(this, 'build')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              Criar
+            </button>
+            <button class="builder-tab" onclick="switchBuilderTab(this, 'design')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9"></path></svg>
+              Definições
+            </button>
+            <button class="builder-tab" onclick="switchBuilderTab(this, 'connect')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+              Conectar
+            </button>
+            <button class="builder-tab" onclick="switchBuilderTab(this, 'share')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              Compartilhar
+            </button>
+            <button class="builder-tab" onclick="switchBuilderTab(this, 'results')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              Resultados
+            </button>
           </div>
         </div>
         <div class="topbar-right">
-          <button class="btn-outline-sm" onclick="goToPreview()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            Pré-visualizar
+          <button class="btn-icon-sm mobile-hide" onclick="goToPreview()" title="Pré-visualizar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+          <button class="btn-icon-sm" onclick="openWebhookConfig()" title="Configurações">
+            <svg class="mobile-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9"></path></svg>
+            <svg class="desktop-text" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
           </button>
           <button class="btn-primary-sm" onclick="publishForm()">
-            Publicar
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span class="desktop-text">Salvar</span>
+            <span class="mobile-text" style="display:none">Concluído</span>
           </button>
         </div>
       </div>
 
       <div class="builder-body">
+        <!-- Icon Bar -->
+        <div class="builder-icon-bar">
+          <div class="icon-bar-btn active" id="iconbar-elements" onclick="switchIconBar('elements')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Elementos</span>
+          </div>
+          <div class="icon-bar-btn" id="iconbar-design" onclick="switchIconBar('design')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>
+            <span>Design</span>
+          </div>
+          <div class="icon-bar-btn" id="iconbar-logic" onclick="switchIconBar('logic')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            <span>Lógica</span>
+          </div>
+        </div>
         <!-- Design Panel (hidden by default) -->
         <div class="builder-panel-left design-panel" id="builder-panel-design" style="display:none;">
           <div class="panel-section">
@@ -2948,63 +3433,130 @@
           </div>
         </div>
 
-        <!-- Left Panel: Field Palette -->
+        <!-- Left Panel: Field Palette (List Style) -->
         <div class="builder-panel-left" id="builder-fields-panel">
-          <div class="panel-section">
-            <div class="panel-section-title">Campos de Entrada</div>
-            <div class="elements-grid">
-              <div class="element-btn" onclick="addField('short_text')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="10" y2="21"></line><line x1="14" y1="3" x2="14" y2="21"></line></svg>
-                Texto Curto
+          
+          <div class="sidebar-search">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;" class="mobile-text">
+              <span style="font-weight:600; font-size:14px; color:white; display:none;" class="mobile-text">Adicionar Campo</span>
+              <button class="btn-icon-sm" style="display:none;" class="mobile-text" onclick="toggleMobileFields()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            <div class="sidebar-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" class="sidebar-search-input" id="field-search" placeholder="Pesquisar campos..." oninput="filterFieldList(this.value)">
+            </div>
+          </div>
+
+          <!-- Category: Essenciais -->
+          <div class="field-category" id="cat-essenciais">
+            <div class="field-category-header" onclick="toggleCategory('cat-essenciais')">
+              <span class="field-category-title">Essenciais</span>
+              <svg class="field-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="field-category-items">
+              <div class="field-list-item" onclick="addField('short_text')" data-field-name="texto curto short text">
+                <div class="field-list-icon purple">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="10" y2="21"></line><line x1="14" y1="3" x2="14" y2="21"></line></svg>
+                </div>
+                <span>Texto Curto</span>
               </div>
-              <div class="element-btn" onclick="addField('long_text')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>
-                Texto Longo
+              <div class="field-list-item" onclick="addField('long_text')" data-field-name="texto longo long text">
+                <div class="field-list-icon purple">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>
+                </div>
+                <span>Texto Longo</span>
               </div>
-              <div class="element-btn" onclick="addField('email')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                E-mail
+              <div class="field-list-item" onclick="addField('number')" data-field-name="número number">
+                <div class="field-list-icon blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                </div>
+                <span>Número</span>
               </div>
-              <div class="element-btn" onclick="addField('number')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Número
-              </div>
-              <div class="element-btn" onclick="addField('phone')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                Telefone
-              </div>
-              <div class="element-btn" onclick="addField('date')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                Data
+              <div class="field-list-item" onclick="addField('date')" data-field-name="data date calendário">
+                <div class="field-list-icon green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <span>Data</span>
               </div>
             </div>
           </div>
-          <div class="panel-section">
-            <div class="panel-section-title">Seleção</div>
-            <div class="elements-grid">
-              <div class="element-btn" onclick="addField('radio')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+
+          <!-- Category: Detalhes do contato -->
+          <div class="field-category" id="cat-contato">
+            <div class="field-category-header" onclick="toggleCategory('cat-contato')">
+              <span class="field-category-title">Detalhes do contato</span>
+              <svg class="field-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="field-category-items">
+              <div class="field-list-item" onclick="addField('email')" data-field-name="email e-mail correio">
+                <div class="field-list-icon pink">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </div>
+                <span>E-mail</span>
+              </div>
+              <div class="field-list-item" onclick="addField('phone')" data-field-name="telefone phone celular">
+                <div class="field-list-icon cyan">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.8.3 1.6.57 2.36a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.76.27 1.56.45 2.36.57A2 2 0 0 1 22 16.92z"></path></svg>
+                </div>
+                <span>Telefone</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category: Seleção -->
+          <div class="field-category" id="cat-selecao">
+            <div class="field-category-header" onclick="toggleCategory('cat-selecao')">
+              <span class="field-category-title">Seleção</span>
+              <svg class="field-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="field-category-items">
+              <div class="field-list-item" onclick="addField('multiple_choice')" data-field-name="múltipla escolha radio opções">
+                <div class="field-list-icon amber">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+                </div>
                 <span>Múltipla Escolha</span>
               </div>
-              <div class="element-btn" onclick="addField('checkbox')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+              <div class="field-list-item" onclick="addField('checkboxes')" data-field-name="caixas seleção checkbox">
+                <div class="field-list-icon green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                </div>
                 <span>Caixas de Seleção</span>
               </div>
-              <div class="element-btn" onclick="addField('dropdown')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <div class="field-list-item" onclick="addField('dropdown')" data-field-name="dropdown lista suspensa">
+                <div class="field-list-icon blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
                 <span>Dropdown</span>
               </div>
-              <div class="element-btn" onclick="addField('rating')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </div>
+          </div>
+
+          <!-- Category: Avançado -->
+          <div class="field-category" id="cat-avancado">
+            <div class="field-category-header" onclick="toggleCategory('cat-avancado')">
+              <span class="field-category-title">Avançado</span>
+              <svg class="field-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="field-category-items">
+              <div class="field-list-item" onclick="addField('rating')" data-field-name="avaliação estrelas rating">
+                <div class="field-list-icon amber">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </div>
                 <span>Avaliação</span>
               </div>
-              <div class="element-btn" onclick="addField('scale')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              <div class="field-list-item" onclick="addField('scale')" data-field-name="escala scale nps">
+                <div class="field-list-icon cyan">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                </div>
                 <span>Escala</span>
               </div>
-              <div class="element-btn" onclick="addField('file')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <span>Upload</span>
+              <div class="field-list-item" onclick="addField('file_upload')" data-field-name="upload arquivo file enviar">
+                <div class="field-list-icon red">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <span>Upload de Arquivo</span>
               </div>
             </div>
           </div>
@@ -3015,7 +3567,7 @@
           <div class="canvas-frame">
             <div class="canvas-paper" onclick="event.stopPropagation()">
               <div class="canvas-form-header">
-                <input type="text" class="canvas-form-title" id="canvas-form-title" value="Formulário sem título" placeholder="Título do formulário">
+                <input type="text" class="canvas-form-title" id="canvas-form-title" value="Formulário sem título" placeholder="Título do formulário" style="height:auto;">
                 <textarea class="canvas-form-desc" id="canvas-form-desc" rows="2" placeholder="Adicione uma descrição..."></textarea>
               </div>
               <div class="canvas-fields" id="canvas-fields">
@@ -3025,6 +3577,10 @@
                 </div>
               </div>
             </div>
+          </div>
+          
+          <div class="mobile-fab" onclick="toggleMobileFields()" style="display:none;" id="mobile-add-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </div>
         </div>
 
@@ -3255,6 +3811,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script>
+
     // ==================== STATE ====================
     const state = {
       forms: [],
@@ -3657,6 +4214,7 @@
     function goToBuilder(fromPreview) {
       if (!fromPreview) {
         closeModal('create-modal');
+        state.currentFormId = null;
         state.fields = [];
         state.selectedFieldId = null;
         state.formTitle = 'Novo Formulário';
@@ -3664,7 +4222,13 @@
         document.getElementById('builder-form-title').value = 'Novo Formulário';
         document.getElementById('canvas-form-title').value = 'Novo Formulário';
         document.getElementById('canvas-form-desc').value = '';
+        updateBreadcrumb('Novo Formulário');
         closeSettingsPanel();
+        // Reset to build tab
+        document.querySelectorAll('.builder-tab').forEach(t => t.classList.remove('active'));
+        const buildTab = document.querySelector('.builder-tab');
+        if (buildTab) buildTab.classList.add('active');
+        switchIconBar('elements');
       }
       hideAllViews();
       document.getElementById('view-builder').classList.add('active');
@@ -3678,19 +4242,114 @@
 
       const fieldsPanel = document.getElementById('builder-fields-panel');
       const designPanel = document.getElementById('builder-panel-design');
+      const iconBar = document.querySelector('.builder-icon-bar');
+      const canvas = document.querySelector('.builder-canvas');
+      const settingsPanel = document.getElementById('settings-panel');
+
+      // Hide all side panels first
+      if (fieldsPanel) fieldsPanel.style.display = 'none';
+      if (designPanel) designPanel.style.display = 'none';
 
       if (tab === 'build') {
+        if (iconBar) iconBar.style.display = 'flex';
+        fieldsPanel.style.display = 'flex';
+        if (canvas) canvas.style.display = 'flex';
+      } else if (tab === 'design') {
+        if (iconBar) iconBar.style.display = 'flex';
+        designPanel.style.display = 'flex';
+        if (canvas) canvas.style.display = 'flex';
+        syncDesignPanel();
+        // Set design icon active
+        switchIconBar('design');
+      } else if (tab === 'connect') {
+        if (iconBar) iconBar.style.display = 'none';
+        if (canvas) canvas.style.display = 'flex';
+        openWebhookConfig();
+      } else if (tab === 'share') {
+        if (iconBar) iconBar.style.display = 'none';
+        if (canvas) canvas.style.display = 'flex';
+        openShareModal();
+      } else if (tab === 'results') {
+        if (iconBar) iconBar.style.display = 'none';
+        if (canvas) canvas.style.display = 'flex';
+        if (state.currentFormId) {
+          viewResponses(state.currentFormId);
+        } else {
+          showToast('Salve o formulário primeiro para ver resultados', 'info');
+        }
+      }
+    }
+
+    // ==================== ICON BAR ====================
+    function switchIconBar(panel) {
+      document.querySelectorAll('.icon-bar-btn').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById('iconbar-' + panel);
+      if (btn) btn.classList.add('active');
+
+      const fieldsPanel = document.getElementById('builder-fields-panel');
+      const designPanel = document.getElementById('builder-panel-design');
+
+      if (panel === 'elements') {
         fieldsPanel.style.display = 'flex';
         designPanel.style.display = 'none';
-      } else if (tab === 'design') {
+        if (window.innerWidth <= 768) toggleMobileFields(true);
+      } else if (panel === 'design') {
         fieldsPanel.style.display = 'none';
         designPanel.style.display = 'flex';
         syncDesignPanel();
-      } else if (tab === 'settings') {
-        fieldsPanel.style.display = 'flex';
+        if (window.innerWidth <= 768) {
+          designPanel.classList.add('mobile-open');
+        }
+      } else if (panel === 'logic') {
+        fieldsPanel.style.display = 'none'; // hide others
         designPanel.style.display = 'none';
-        showToast('Configurações avançadas em breve! ⚙️', 'info');
+        showToast('Selecione um campo no canvas para configurar lógica condicional', 'info');
       }
+    }
+
+    function toggleMobileFields(forceOpen = false) {
+      const panel = document.getElementById('builder-fields-panel');
+      if (!panel) return;
+      if (forceOpen === true) {
+        panel.classList.add('mobile-open');
+      } else {
+        panel.classList.toggle('mobile-open');
+      }
+    }
+
+    // ==================== CATEGORY TOGGLE ====================
+    function toggleCategory(categoryId) {
+      const el = document.getElementById(categoryId);
+      if (el) el.classList.toggle('collapsed');
+    }
+
+    // ==================== FIELD SEARCH ====================
+    function filterFieldList(query) {
+      const q = query.toLowerCase().trim();
+      const items = document.querySelectorAll('.field-list-item');
+      const categories = document.querySelectorAll('.field-category');
+
+      items.forEach(item => {
+        const name = (item.getAttribute('data-field-name') || '').toLowerCase();
+        const label = (item.querySelector('span')?.textContent || '').toLowerCase();
+        const match = !q || name.includes(q) || label.includes(q);
+        item.style.display = match ? 'flex' : 'none';
+      });
+
+      // Hide empty categories
+      categories.forEach(cat => {
+        const visibleItems = cat.querySelectorAll('.field-list-item[style*="flex"], .field-list-item:not([style])');
+        const hasVisible = Array.from(cat.querySelectorAll('.field-list-item')).some(i => i.style.display !== 'none');
+        cat.style.display = hasVisible ? 'block' : 'none';
+        // Expand categories when searching
+        if (q) cat.classList.remove('collapsed');
+      });
+    }
+
+    // ==================== BREADCRUMB SYNC ====================
+    function updateBreadcrumb(title) {
+      const el = document.getElementById('builder-breadcrumb-title');
+      if (el) el.textContent = title || 'Formulário sem título';
     }
 
     function syncDesignPanel() {
@@ -3893,6 +4552,8 @@
         placeholder: ''
       };
       state.fields.push(newField);
+      const panel = document.getElementById('builder-fields-panel');
+      if (panel) panel.classList.remove('mobile-open');
       selectField(id);
       renderCanvas();
     }
@@ -3906,6 +4567,8 @@
     function deselectField(e) {
       state.selectedFieldId = null;
       closeSettingsPanel();
+      const panel = document.getElementById('builder-fields-panel');
+      if (panel) panel.classList.remove('mobile-open');
       renderCanvas();
     }
 
@@ -4214,50 +4877,6 @@
       });
     }
 
-    // ==================== SHARE ====================
-    function switchShareTab(tab, el) {
-      document.querySelectorAll('.share-tab').forEach(t => t.classList.remove('active'));
-      el.classList.add('active');
-      document.querySelectorAll('.share-content').forEach(c => c.classList.remove('active'));
-      document.getElementById('share-' + tab).classList.add('active');
-    }
-
-    function openShareModal() {
-      const formId = state.currentFormId || (state.forms.length > 0 ? state.forms[0].id : '');
-      const link = window.location.origin + '/form/' + formId;
-      const linkInput = document.getElementById('share-link-input');
-      if (linkInput) linkInput.value = link;
-      const embedEl = document.querySelector('.embed-code');
-      if (embedEl) embedEl.value = `<iframe src="${link}" width="100%" height="600px" style="border:none; border-radius:12px; background:transparent;" allowfullscreen></iframe>`;
-      document.getElementById('share-modal').classList.add('active');
-      generateQR();
-    }
-
-    function copyShareLink() {
-      const input = document.getElementById('share-link-input');
-      navigator.clipboard?.writeText(input.value);
-      showToast('Link copiado! 📋', 'success');
-    }
-
-    function copyEmbed() {
-      const el = document.querySelector('.embed-code');
-      navigator.clipboard?.writeText(el.value);
-      showToast('Código embed copiado!', 'success');
-    }
-
-    function generateQR() {
-      const grid = document.getElementById('qr-grid');
-      if (!grid) return;
-      const pattern = [];
-      for (let i = 0; i < 49; i++) {
-        const row = Math.floor(i / 7);
-        const col = i % 7;
-        const isCorner = (row < 3 && col < 3) || (row < 3 && col > 3) || (row > 3 && col < 3);
-        const isDark = isCorner || Math.random() > 0.5;
-        pattern.push(isDark);
-      }
-      grid.innerHTML = pattern.map(dark => `<div class="qr-cell ${dark ? 'dark' : 'light'}"></div>`).join('');
-    }
 
     // ==================== NAVIGATION ====================
     function goToPreview() {
@@ -4484,6 +5103,7 @@
     }
 
 
+
     // ==================== RESPONSES ====================
     let currentResponseFormId = null;
 
@@ -4491,7 +5111,6 @@
       if (!formId && state.forms.length > 0) formId = state.forms[0].id;
       if (!formId) { showToast('Nenhum formulário para mostrar respostas.', 'info'); return; }
 
-      // Standardize formId to string for comparison if needed
       const form = state.forms.find(f => String(f.id) === String(formId));
       if (!form) return;
       
@@ -4499,25 +5118,12 @@
       hideAllViews();
       document.getElementById('view-responses').classList.add('active');
       
-      // Update selector
       const select = document.getElementById('responses-form-select');
-      select.innerHTML = state.forms.map(f => `<option value="${f.id}" ${String(f.id) === String(formId) ? 'selected' : ''}>${f.title}</option>`).join('');
+      if (select) select.innerHTML = state.forms.map(f => `<option value="${f.id}" ${String(f.id) === String(formId) ? 'selected' : ''}>${f.title}</option>`).join('');
       
       const body = document.getElementById('responses-body');
       
-      // Fetch fresh responses if connected to server
-      let responses = [];
-      try {
-        const res = await fetch(`/api/responses?form_id=${formId}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('formei_token')}` }
-        });
-        const data = await res.json();
-        responses = data.responses || [];
-        state.responses[formId] = responses;
-      } catch (err) {
-        responses = state.responses[formId] || [];
-      }
-
+      let responses = state.responses[formId] || [];
       const rate = form.views > 0 ? Math.round((responses.length / form.views) * 100) : 0;
 
       if (responses.length === 0) {
@@ -4537,16 +5143,15 @@
         return;
       }
 
-      // Dynamic table headers based on form fields
       const fields = form.fields || [];
-      const tableHeaders = fields.slice(0, 5).map(f => `<th>${(f.label || 'Campo').slice(0, 25)}${f.label && f.label.length > 25 ? '...' : ''}</th>`).join('');
+      const tableHeaders = fields.slice(0, 5).map(f => `<th>${(f.label || 'Campo').slice(0, 25)}</th>`).join('');
       
       const tableRows = responses.map(r => {
         const d = r.data || {};
         const cells = fields.slice(0, 5).map(f => {
           let val = d[f.id] || '—';
           if (Array.isArray(val)) val = val.join(', ');
-          return `<td>${String(val).slice(0, 40)}${String(val).length > 40 ? '...' : ''}</td>`;
+          return `<td>${String(val).slice(0, 40)}</td>`;
         }).join('');
         const date = new Date(r.submitted_at || r.submittedAt).toLocaleString('pt-BR');
         return `<tr>${cells}<td style="color:var(--text-muted)">${date}</td></tr>`;
@@ -4615,45 +5220,7 @@
       grid.innerHTML = pattern.map(dark => `<div class="qr-cell ${dark ? 'dark' : 'light'}"></div>`).join('');
     }
 
-    // ==================== DUPLICATE FORM ====================
-    async function duplicateForm(formId, e) {
-      if (e) e.stopPropagation();
-      try {
-        await apiCall(`/api/forms/${formId}/duplicate`, { method: 'POST' });
-        showToast('Formulário duplicado! 📋', 'success');
-        await loadFormsFromAPI();
-      } catch (err) {
-        showToast('Erro ao duplicar: ' + err.message, 'error');
-      }
-    }
-
-    // ==================== CSV EXPORT ====================
-    function exportCSV(formId) {
-      const token = getToken();
-      const a = document.createElement('a');
-      a.href = `/api/forms/${formId}/export/csv?token=${token}`;
-      a.download = 'respostas.csv';
-      // Use fetch with auth header
-      fetch(`/api/forms/${formId}/export/csv`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).then(r => r.blob()).then(blob => {
-        const url = URL.createObjectURL(blob);
-        a.href = url;
-        a.click();
-        URL.revokeObjectURL(url);
-      }).catch(() => showToast('Erro ao exportar CSV', 'error'));
-    }
-
     // ==================== NOTIFICATIONS ====================
-    async function loadNotifications() {
-      try {
-        const data = await apiCall('/api/notifications');
-        state.notifications = data.notifications || [];
-        state.unreadCount = data.unreadCount || 0;
-        updateNotifBadge();
-      } catch {}
-    }
-
     function updateNotifBadge() {
       const badge = document.getElementById('notif-badge');
       if (badge) {
@@ -4686,22 +5253,8 @@
       `).join('');
     }
 
-    async function markNotifRead(id) {
-      try {
-        await apiCall(`/api/notifications/${id}/read`, { method: 'PUT' });
-        await loadNotifications();
-      } catch {}
-    }
-
-    async function markAllNotifsRead() {
-      try {
-        await apiCall('/api/notifications/read-all', { method: 'PUT' });
-        state.unreadCount = 0;
-        updateNotifBadge();
-        renderNotifications();
-        showToast('Todas marcadas como lidas', 'success');
-      } catch {}
-    }
+    let markNotifRead = async function(id) {};
+    let markAllNotifsRead = async function() {};
 
     // ==================== USER SETTINGS ====================
     function openSettings() {
@@ -4712,71 +5265,16 @@
       document.getElementById('modal-settings').classList.add('active');
     }
 
-    async function saveSettings() {
-      const name = document.getElementById('settings-name').value;
-      const email = document.getElementById('settings-email').value;
-      try {
-        const data = await apiCall('/api/auth/me', {
-          method: 'PUT',
-          body: JSON.stringify({ name, email })
-        });
-        setUser(data.user);
-        updateUserUI(data.user);
-        showToast('Perfil atualizado! ✅', 'success');
-        closeModal('modal-settings');
-      } catch (err) {
-        showToast('Erro: ' + err.message, 'error');
-      }
-    }
-
-    async function changePassword() {
-      const current = document.getElementById('settings-current-pw').value;
-      const newPw = document.getElementById('settings-new-pw').value;
-      if (!current || !newPw) { showToast('Preencha ambas as senhas', 'error'); return; }
-      try {
-        await apiCall('/api/auth/password', {
-          method: 'PUT',
-          body: JSON.stringify({ currentPassword: current, newPassword: newPw })
-        });
-        showToast('Senha alterada com sucesso! 🔒', 'success');
-        document.getElementById('settings-current-pw').value = '';
-        document.getElementById('settings-new-pw').value = '';
-      } catch (err) {
-        showToast('Erro: ' + err.message, 'error');
-      }
-    }
-
-    async function deleteAccount() {
-      if (!confirm('Tem certeza que deseja excluir sua conta? Esta ação é irreversível.')) return;
-      if (!confirm('ÚLTIMA CHANCE: Todos os seus formulários e respostas serão apagados permanentemente.')) return;
-      try {
-        await apiCall('/api/auth/me', { method: 'DELETE' });
-        clearToken();
-        location.reload();
-      } catch (err) {
-        showToast('Erro: ' + err.message, 'error');
-      }
-    }
+    let saveSettings = async function() {};
+    let changePassword = async function() {};
+    let deleteAccount = async function() {};
 
     // ==================== PLANS ====================
     function openPlans() {
       document.getElementById('modal-plans').classList.add('active');
     }
 
-    async function upgradePlan(plan) {
-      try {
-        const data = await apiCall('/api/plans/upgrade', {
-          method: 'POST',
-          body: JSON.stringify({ plan })
-        });
-        setUser(data.user);
-        updateUserUI(data.user);
-        showToast(`Upgrade para ${plan === 'pro' ? 'Pro' : 'Business'} realizado! 🚀`, 'success');
-        closeModal('modal-plans');
-      } catch (err) {
-        showToast('Erro: ' + err.message, 'error');
-      }
-    }
+    let upgradePlan = async function(plan) {};
 
     // ==================== FORGOT PASSWORD ====================
     function showForgotPassword() {
@@ -4784,47 +5282,8 @@
       document.getElementById('auth-forgot').classList.add('active');
     }
 
-    async function handleForgotPassword(e) {
-      e.preventDefault();
-      const email = document.getElementById('forgot-email').value;
-      const btn = document.getElementById('forgot-btn');
-      btn.disabled = true;
-      btn.textContent = 'Enviando...';
-      try {
-        const data = await apiCall('/api/auth/forgot-password', {
-          method: 'POST',
-          body: JSON.stringify({ email })
-        });
-        if (data._devToken) {
-          // For demo, show the token and allow reset
-          document.getElementById('forgot-form-section').style.display = 'none';
-          document.getElementById('reset-form-section').style.display = 'block';
-          document.getElementById('reset-token').value = data._devToken;
-        }
-        showToast('Verifique seu email para o link de recuperação', 'success');
-      } catch (err) {
-        showToast('Erro: ' + err.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Enviar link de recuperação';
-      }
-    }
-
-    async function handleResetPassword(e) {
-      e.preventDefault();
-      const token = document.getElementById('reset-token').value;
-      const newPw = document.getElementById('reset-new-pw').value;
-      try {
-        await apiCall('/api/auth/reset-password', {
-          method: 'POST',
-          body: JSON.stringify({ token, newPassword: newPw })
-        });
-        showToast('Senha redefinida com sucesso! Faça login.', 'success');
-        showLogin();
-      } catch (err) {
-        showToast('Erro: ' + err.message, 'error');
-      }
-    }
+    let handleForgotPassword = async function(e) { e.preventDefault(); };
+    let handleResetPassword = async function(e) { e.preventDefault(); };
 
     // ==================== DRAG & DROP ====================
     let draggedFieldId = null;
@@ -4866,32 +5325,18 @@
 
     // ==================== WEBHOOK CONFIG ====================
     function openWebhookConfig() {
-      document.getElementById('webhook-url-input').value = state.webhookUrl || '';
+      const input = document.getElementById('webhook-url-input');
+      if (input) input.value = state.webhookUrl || '';
       document.getElementById('modal-webhook').classList.add('active');
     }
 
-    async function saveWebhook() {
-      const url = document.getElementById('webhook-url-input').value;
-      state.webhookUrl = url;
-      if (state.currentFormId) {
-        try {
-          await apiCall(`/api/forms/${state.currentFormId}`, {
-            method: 'PUT',
-            body: JSON.stringify({ webhook_url: url })
-          });
-          showToast('Webhook salvo! 🔗', 'success');
-        } catch (err) {
-          showToast('Erro: ' + err.message, 'error');
-        }
-      }
-      closeModal('modal-webhook');
-    }
+    let saveWebhook = async function() {};
 
     // ==================== DASHBOARD ====================
     function setViewMode(mode) {
       state.viewMode = mode;
-      document.getElementById('grid-view-btn').classList.toggle('active', mode === 'grid');
-      document.getElementById('list-view-btn').classList.toggle('active', mode === 'list');
+      document.getElementById('grid-view-btn')?.classList.toggle('active', mode === 'grid');
+      document.getElementById('list-view-btn')?.classList.toggle('active', mode === 'list');
       renderDashboard();
     }
 
@@ -4899,33 +5344,10 @@
       renderDashboard();
     }
 
-    function editForm(formId) {
-      const form = state.forms.find(f => f.id === formId);
-      if (!form) return;
-      
-      state.currentFormId = form.id;
-      state.fields = JSON.parse(JSON.stringify(form.fields));
-      state.formTitle = form.title;
-      state.formDesc = form.desc || '';
-      state.selectedFieldId = null;
-      
-      document.getElementById('builder-form-title').value = form.title;
-      document.getElementById('canvas-form-title').value = form.title;
-      document.getElementById('canvas-form-desc').value = form.desc || '';
-      
-      hideAllViews();
-      document.getElementById('view-builder').classList.add('active');
-      closeSettingsPanel();
-      renderCanvas();
-    }
-
-    function deleteForm(formId, e) {
-      e.stopPropagation();
-      state.forms = state.forms.filter(f => f.id !== formId);
-      delete state.responses[formId];
-      renderDashboard();
-      showToast('Formulário removido', 'success');
-    }
+    let editForm = async function(formId) {};
+    let deleteForm = async function(formId, e) {};
+    let duplicateForm = async function(formId, e) {};
+    let exportCSV = async function(formId) {};
 
     function renderDashboard() {
       const gridContainer = document.getElementById('forms-grid-container');
@@ -4934,78 +5356,80 @@
       const statsRow = document.getElementById('stats-row');
       
       const searchQuery = document.getElementById('search-input')?.value?.toLowerCase() || '';
-      const filteredForms = state.forms.filter(f => f.title.toLowerCase().includes(searchQuery));
+      const filteredForms = state.forms.filter(f => (f.title||'').toLowerCase().includes(searchQuery));
 
       // Update stats
-      const totalResponses = state.forms.reduce((sum, f) => sum + (state.responses[f.id]?.length || 0), 0);
+      const totalResponses = Object.values(state.responses).reduce((sum, r) => sum + r.length, 0);
       const totalViews = state.forms.reduce((sum, f) => sum + (f.views || 0), 0);
       const avgRate = totalViews > 0 ? Math.round((totalResponses / totalViews) * 100) : 0;
-      document.getElementById('stat-forms').textContent = state.forms.length;
-      document.getElementById('stat-responses').textContent = totalResponses;
-      document.getElementById('stat-views').textContent = totalViews;
-      document.getElementById('stat-rate').textContent = avgRate + '%';
+      
+      const statForms = document.getElementById('stat-forms');
+      if (statForms) statForms.textContent = state.forms.length;
+      const statResponses = document.getElementById('stat-responses');
+      if (statResponses) statResponses.textContent = totalResponses;
+      const statViews = document.getElementById('stat-views');
+      if (statViews) statViews.textContent = totalViews;
+      const statRate = document.getElementById('stat-rate');
+      if (statRate) statRate.textContent = avgRate + '%';
 
       if (filteredForms.length === 0) {
-        gridContainer.style.display = 'none';
-        listContainer.style.display = 'none';
-        empty.style.display = searchQuery ? 'none' : 'flex';
-        statsRow.style.display = state.forms.length > 0 ? 'flex' : 'none';
-        if (searchQuery) {
-          gridContainer.style.display = 'none';
+        if (gridContainer) gridContainer.style.display = 'none';
+        if (listContainer) listContainer.style.display = 'none';
+        if (empty) {
           empty.style.display = 'flex';
-          empty.querySelector('.empty-text').textContent = 'Nenhum formulário encontrado';
-          empty.querySelector('.empty-subtext').textContent = 'Tente uma busca diferente.';
+          empty.querySelector('.empty-text').textContent = searchQuery ? 'Nenhum formulário encontrado' : 'Nenhum formulário criado';
         }
+        if (statsRow) statsRow.style.display = state.forms.length > 0 ? 'flex' : 'none';
         return;
       }
 
-      statsRow.style.display = 'flex';
-      empty.style.display = 'none';
+      if (statsRow) statsRow.style.display = 'flex';
+      if (empty) empty.style.display = 'none';
 
       if (state.viewMode === 'grid') {
-        gridContainer.style.display = 'grid';
-        listContainer.style.display = 'none';
-        gridContainer.innerHTML = filteredForms.map((form, i) => `
-          <div class="form-card" style="animation-delay: ${i * 0.05}s" onclick="editForm('${form.id}')">
-            <div class="form-card-emoji">${form.emoji}</div>
-            <div class="form-card-title">${form.title}</div>
-            <div class="form-card-desc">${form.desc || `${form.fields?.length || 0} campos • Criado em ${form.createdAt}`}</div>
-            <div class="form-card-footer">
-              <div class="form-card-stats">
-                <div class="form-card-stat">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                  ${state.responses[form.id]?.length || 0} respostas
-                </div>
-                <div class="form-card-stat">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  ${form.views || 0}
-                </div>
+        if (gridContainer) {
+          gridContainer.style.display = 'grid';
+          gridContainer.innerHTML = filteredForms.map((form, i) => `
+            <div class="db-form-card" style="animation-delay: ${i * 0.05}s" onclick="editForm('${form.id}')">
+              <div class="db-card-top">
+                <span class="db-card-emoji">${form.emoji || '📋'}</span>
               </div>
-              <div class="form-card-actions">
-                <button onclick="event.stopPropagation(); viewResponses('${form.id}')" title="Ver respostas">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <div class="db-card-body">
+                <div class="db-card-title">${form.title}</div>
+              </div>
+              <div class="db-card-footer">
+                <div class="db-card-responses">Respostas: <b>${form.responseCount || 0}</b></div>
+                <button class="db-card-menu-btn" onclick="event.stopPropagation(); deleteForm('${form.id}', event)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                 </button>
-              <button onclick="deleteForm('${form.id}', event)" title="Excluir">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
+              </div>
             </div>
-          </div>
-        `).join('');
+          `).join('');
+        }
+        if (listContainer) listContainer.style.display = 'none';
       }
     }
 
     // ==================== SYNC TITLE INPUTS ====================
-    document.getElementById('builder-form-title').addEventListener('input', (e) => {
-      document.getElementById('canvas-form-title').value = e.target.value;
+    const bTitle = document.getElementById('builder-form-title');
+    const cTitle = document.getElementById('canvas-form-title');
+    const cDesc = document.getElementById('canvas-form-desc');
+
+    if (bTitle) bTitle.addEventListener('input', (e) => {
+      if (cTitle) cTitle.value = e.target.value;
       state.formTitle = e.target.value;
+      updateBreadcrumb(e.target.value);
     });
-    document.getElementById('canvas-form-title').addEventListener('input', (e) => {
-      document.getElementById('builder-form-title').value = e.target.value;
+    if (cTitle) cTitle.addEventListener('input', (e) => {
+      if (bTitle) bTitle.value = e.target.value;
       state.formTitle = e.target.value;
+      updateBreadcrumb(e.target.value);
     });
-    document.getElementById('canvas-form-desc').addEventListener('input', (e) => {
+    if (cDesc) cDesc.addEventListener('input', (e) => {
       state.formDesc = e.target.value;
     });
+
+    // ==================== SUPABASE CONFIG ====================
 
     // ==================== SUPABASE CONFIG ====================
     const SUPABASE_URL = 'https://rjjsjxzoyxerztxxovjp.supabase.co';
@@ -5208,15 +5632,19 @@
           form.responseCount = state.responses[form.id].length;
         }
 
-        // Update stats
+        // Update stats safely
         const totalForms = state.forms.length;
         const totalResponses = Object.values(state.responses).reduce((sum, r) => sum + r.length, 0);
-        const totalViews = state.forms.reduce((sum, f) => sum + (f.views || 0), 0);
-        const conversionRate = totalViews > 0 ? Math.round((totalResponses / totalViews) * 100) : 0;
-        document.getElementById('stat-forms').textContent = totalForms;
-        document.getElementById('stat-responses').textContent = totalResponses;
-        document.getElementById('stat-views').textContent = totalViews;
-        document.getElementById('stat-rate').textContent = conversionRate + '%';
+        
+        const sf = document.getElementById('stat-forms');
+        if (sf) sf.textContent = totalForms;
+        const sr = document.getElementById('stat-responses');
+        if (sr) sr.textContent = totalResponses;
+        const sv = document.getElementById('stat-views');
+        if (sv) sv.textContent = state.forms.reduce((sum, f) => sum + (f.views || 0), 0);
+        
+        const badge = document.getElementById('nav-forms-count');
+        if (badge) badge.textContent = `(${totalForms})`;
 
         renderDashboard();
 
@@ -5331,6 +5759,7 @@
         document.getElementById('builder-form-title').value = form.title;
         document.getElementById('canvas-form-title').value = form.title;
         document.getElementById('canvas-form-desc').value = form.description || '';
+        updateBreadcrumb(form.title);
 
         hideAllViews();
         document.getElementById('view-builder').classList.add('active');
@@ -5669,6 +6098,7 @@
       }, 30000);
     }
 
+  
   </script>
 </body>
 </html>

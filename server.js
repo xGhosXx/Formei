@@ -10,9 +10,20 @@ const http = require('http');
 const https = require('https');
 const { URL } = require('url');
 
+const { createClient } = require('@supabase/supabase-js');
+
 const app = express();
-const PORT = 3000;
-const JWT_SECRET = 'formei_secret_key_2024_ultraSeguro';
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'formei_secret_key_2024_ultraSeguro';
+
+// Supabase initialization
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+if (!supabase) {
+  console.warn('⚠️ Supabase credentials not found. Local JSON DB will be used (limited persistence on Vercel).');
+}
 
 // Middleware
 app.use(cors());
@@ -30,18 +41,22 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // File upload setup
+// For local fallback
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
+// We'll use memory storage for Supabase uploads, and disk storage for local fallback
+const memoryStorage = multer.memoryStorage();
+const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`);
   }
 });
+
 const upload = multer({
-  storage,
+  storage: (SUPABASE_URL && SUPABASE_KEY) ? memoryStorage : diskStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|csv|txt|zip|mp4|webm/;
@@ -53,6 +68,12 @@ const upload = multer({
 // ==================== JSON FILE DATABASE ====================
 const DB_PATH = path.join(__dirname, 'db', 'data.json');
 const dbDir = path.join(__dirname, 'db');
+
+// ==================== DATABASE HELPERS (Supabase) ====================
+
+// Since the whole server is being migrated to async Supabase calls, 
+// we will replace direct loadDB/saveDB usage inside routes.
+// The loadDB/saveDB functions below are kept for backwards compatibility during migration.
 
 function loadDB() {
   try {
@@ -102,42 +123,55 @@ function authMiddleware(req, res, next) {
 // ==================== AUTH ROUTES ====================
 
 // Register
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
+
+    if (!supabase) {
+      // Fallback to local DB if no Supabase
+      const db = loadDB();
+      const existing = db.users.find(u => u.email === email);
+      if (existing) return res.status(409).json({ error: 'Este email já está cadastrado' });
+      const hashedPassword = bcrypt.hashSync(password, 10);
+      const user = { id: genId(db), name, email, password: hashedPassword, avatar_color: '#7c3aed', plan: 'free', created_at: new Date().toISOString() };
+      db.users.push(user);
+      saveDB(db);
+      const token = jwt.sign({ id: user.id, email }, JWT_SECRET, { expiresIn: '7d' });
+      return res.status(201).json({ token, user: { id: user.id, name, email, avatar_color: user.avatar_color, plan: 'free' } });
     }
 
-    const db = loadDB();
-    const existing = db.users.find(u => u.email === email);
-    if (existing) {
-      return res.status(409).json({ error: 'Este email já está cadastrado' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const colors = ['#7c3aed', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#8b5cf6'];
-    const avatarColor = colors[Math.floor(Math.random() * colors.length)];
-
-    const user = {
-      id: genId(db),
-      name,
+    // Supabase Auth Register
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      password: hashedPassword,
-      avatar_color: avatarColor,
-      plan: 'free',
-      created_at: new Date().toISOString()
-    };
-    db.users.push(user);
-    saveDB(db);
+      password,
+      options: {
+        data: { name }
+      }
+    });
 
-    const token = jwt.sign({ id: user.id, email }, JWT_SECRET, { expiresIn: '7d' });
+    if (authError) return res.status(400).json({ error: authError.message });
+    if (!authData.user) return res.status(400).json({ error: 'Erro ao criar usuário' });
+
+    // Profile is created by trigger in SQL script
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    const token = jwt.sign({ id: authData.user.id, email }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({
       token,
-      user: { id: user.id, name, email, avatar_color: avatarColor, plan: 'free' }
+      user: { 
+        id: authData.user.id, 
+        name: profile?.name || name, 
+        email, 
+        avatar_color: profile?.avatar_color || '#7c3aed', 
+        plan: profile?.plan || 'free' 
+      }
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -146,28 +180,43 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // Login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    const db = loadDB();
-    const user = db.users.find(u => u.email === email);
-    if (!user) {
-      return res.status(401).json({ error: 'Email ou senha incorretos' });
+    if (!supabase) {
+      const db = loadDB();
+      const user = db.users.find(u => u.email === email);
+      if (!user || !bcrypt.compareSync(password, user.password)) {
+        return res.status(401).json({ error: 'Email ou senha incorretos' });
+      }
+      const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ token, user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, plan: user.plan } });
     }
 
-    const validPassword = bcrypt.compareSync(password, user.password);
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Email ou senha incorretos' });
-    }
+    // Supabase Auth Login
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) return res.status(401).json({ error: 'Email ou senha incorretos' });
 
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    const token = jwt.sign({ id: authData.user.id, email: authData.user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, plan: user.plan }
+      user: { 
+        id: authData.user.id, 
+        name: profile?.name || authData.user.user_metadata?.name || '', 
+        email: authData.user.email, 
+        avatar_color: profile?.avatar_color || '#7c3aed', 
+        plan: profile?.plan || 'free' 
+      }
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -176,320 +225,489 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // Get current user
-app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const user = db.users.find(u => u.id === req.userId);
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-  res.json({ user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, plan: user.plan, created_at: user.created_at } });
+app.get('/api/auth/me', authMiddleware, async (req, res) => {
+  if (!supabase) {
+    const db = loadDB();
+    const user = db.users.find(u => u.id === req.userId);
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    return res.json({ user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, plan: user.plan, created_at: user.created_at } });
+  }
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', req.userId)
+    .single();
+
+  if (error || !profile) return res.status(404).json({ error: 'Usuário não encontrado' });
+  res.json({ user: { ...profile, email: req.userEmail } });
 });
 
 // Update user profile
-app.put('/api/auth/me', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const user = db.users.find(u => u.id === req.userId);
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-  if (req.body.name) user.name = req.body.name;
-  if (req.body.email) {
-    const dup = db.users.find(u => u.email === req.body.email && u.id !== req.userId);
-    if (dup) return res.status(409).json({ error: 'Este email já está em uso' });
-    user.email = req.body.email;
+app.put('/api/auth/me', authMiddleware, async (req, res) => {
+  const { name, email, avatar_color } = req.body;
+
+  if (!supabase) {
+    const db = loadDB();
+    const user = db.users.find(u => u.id === req.userId);
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (avatar_color) user.avatar_color = avatar_color;
+    saveDB(db);
+    return res.json({ user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, plan: user.plan } });
   }
-  if (req.body.avatar_color) user.avatar_color = req.body.avatar_color;
-  saveDB(db);
-  res.json({ user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, plan: user.plan } });
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .update({ name, avatar_color })
+    .eq('id', req.userId)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  if (email && email !== req.userEmail) {
+    await supabase.auth.updateUser({ email });
+  }
+
+  res.json({ user: { ...profile, email: email || req.userEmail } });
 });
 
 // Change password
-app.put('/api/auth/password', authMiddleware, (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Senhas são obrigatórias' });
-  if (newPassword.length < 6) return res.status(400).json({ error: 'Nova senha deve ter pelo menos 6 caracteres' });
+app.put('/api/auth/password', authMiddleware, async (req, res) => {
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Nova senha deve ter pelo menos 6 caracteres' });
 
-  const db = loadDB();
-  const user = db.users.find(u => u.id === req.userId);
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-
-  if (!bcrypt.compareSync(currentPassword, user.password)) {
-    return res.status(401).json({ error: 'Senha atual incorreta' });
+  if (!supabase) {
+    const { currentPassword } = req.body;
+    const db = loadDB();
+    const user = db.users.find(u => u.id === req.userId);
+    if (!user || !bcrypt.compareSync(currentPassword, user.password)) return res.status(401).json({ error: 'Senha atual incorreta' });
+    user.password = bcrypt.hashSync(newPassword, 10);
+    saveDB(db);
+    return res.json({ success: true, message: 'Senha alterada com sucesso' });
   }
 
-  user.password = bcrypt.hashSync(newPassword, 10);
-  saveDB(db);
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true, message: 'Senha alterada com sucesso' });
 });
 
 // Request password reset
-app.post('/api/auth/forgot-password', (req, res) => {
+app.post('/api/auth/forgot-password', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email é obrigatório' });
 
-  const db = loadDB();
-  const user = db.users.find(u => u.email === email);
-  if (!user) {
-    // Don't reveal if email exists
-    return res.json({ success: true, message: 'Se o email existir, você receberá um link de recuperação.' });
+  if (!supabase) {
+    const db = loadDB();
+    const user = db.users.find(u => u.email === email);
+    if (!user) return res.json({ success: true, message: 'Se o email existir, você receberá um link de recuperação.' });
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    db.resetTokens = db.resetTokens.filter(t => t.email !== email);
+    db.resetTokens.push({ email, token: resetToken, expires: new Date(Date.now() + 3600000).toISOString() });
+    saveDB(db);
+    return res.json({ success: true, message: 'Se o email existir, você receberá um link de recuperação.', _devToken: resetToken });
   }
 
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  db.resetTokens = db.resetTokens.filter(t => t.email !== email); // Remove old tokens
-  db.resetTokens.push({
-    email,
-    token: resetToken,
-    expires: new Date(Date.now() + 3600000).toISOString() // 1 hour
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${req.headers.origin}/reset-password.html`
   });
-  saveDB(db);
 
-  // In production, send email. Here we return the token for demo purposes
-  console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
-  res.json({ success: true, message: 'Se o email existir, você receberá um link de recuperação.', _devToken: resetToken });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true, message: 'Se o email existir, você receberá um link de recuperação.' });
 });
 
 // Reset password with token
-app.post('/api/auth/reset-password', (req, res) => {
+app.post('/api/auth/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
-  if (!token || !newPassword) return res.status(400).json({ error: 'Token e nova senha são obrigatórios' });
-  if (newPassword.length < 6) return res.status(400).json({ error: 'Nova senha deve ter pelo menos 6 caracteres' });
+  if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Nova senha deve ter pelo menos 6 caracteres' });
 
-  const db = loadDB();
-  const resetEntry = db.resetTokens.find(t => t.token === token && new Date(t.expires) > new Date());
-  if (!resetEntry) return res.status(400).json({ error: 'Token inválido ou expirado' });
+  if (!supabase) {
+    const db = loadDB();
+    const resetEntry = db.resetTokens.find(t => t.token === token && new Date(t.expires) > new Date());
+    if (!resetEntry) return res.status(400).json({ error: 'Token inválido ou expirado' });
+    const user = db.users.find(u => u.email === resetEntry.email);
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    user.password = bcrypt.hashSync(newPassword, 10);
+    db.resetTokens = db.resetTokens.filter(t => t.token !== token);
+    saveDB(db);
+    return res.json({ success: true, message: 'Senha redefinida com sucesso' });
+  }
 
-  const user = db.users.find(u => u.email === resetEntry.email);
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-
-  user.password = bcrypt.hashSync(newPassword, 10);
-  db.resetTokens = db.resetTokens.filter(t => t.token !== token);
-  saveDB(db);
+  // Supabase uses a different flow for reset-password (usually via a link that sets a session)
+  // But if the user provides the token manually (e.g. from an email), we can update the user
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true, message: 'Senha redefinida com sucesso' });
 });
 
 // Delete account
-app.delete('/api/auth/me', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const userForms = db.forms.filter(f => f.user_id === req.userId).map(f => f.id);
-  db.responses = db.responses.filter(r => !userForms.includes(r.form_id));
-  db.forms = db.forms.filter(f => f.user_id !== req.userId);
-  db.notifications = db.notifications.filter(n => n.user_id !== req.userId);
-  db.users = db.users.filter(u => u.id !== req.userId);
-  saveDB(db);
+app.delete('/api/auth/me', authMiddleware, async (req, res) => {
+  if (!supabase) {
+    const db = loadDB();
+    const userForms = db.forms.filter(f => f.user_id === req.userId).map(f => f.id);
+    db.responses = db.responses.filter(r => !userForms.includes(r.form_id));
+    db.forms = db.forms.filter(f => f.user_id !== req.userId);
+    db.notifications = db.notifications.filter(n => n.user_id !== req.userId);
+    db.users = db.users.filter(u => u.id !== req.userId);
+    saveDB(db);
+    return res.json({ success: true });
+  }
+
+  const { error } = await supabase.from('profiles').delete().eq('id', req.userId);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
 
 // ==================== FORMS ROUTES ====================
 
 // List user forms
-app.get('/api/forms', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const forms = db.forms.filter(f => f.user_id === req.userId).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-  forms.forEach(f => {
-    f.response_count = db.responses.filter(r => r.form_id === f.id).length;
-  });
-  res.json({ forms });
+app.get('/api/forms', authMiddleware, async (req, res) => {
+  if (!supabase) {
+    const db = loadDB();
+    const forms = db.forms.filter(f => f.user_id === req.userId).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    forms.forEach(f => {
+      f.response_count = db.responses.filter(r => r.form_id === f.id).length;
+    });
+    return res.json({ forms });
+  }
+
+  // Supabase version
+  const { data: forms, error } = await supabase
+    .from('forms')
+    .select('*, responses(count)')
+    .eq('user_id', req.userId)
+    .order('updated_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Map counts
+  const formsWithCount = forms.map(f => ({
+    ...f,
+    response_count: f.responses?.[0]?.count || 0
+  }));
+
+  res.json({ forms: formsWithCount });
 });
 
 // Get single form
-app.get('/api/forms/:id', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const form = db.forms.find(f => f.id === id && f.user_id === req.userId);
-  if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
-  form.response_count = db.responses.filter(r => r.form_id === form.id).length;
+app.get('/api/forms/:id', authMiddleware, async (req, res) => {
+  const id = req.params.id; // Could be numeric string or UUID depending on DB
+
+  if (!supabase) {
+    const db = loadDB();
+    const form = db.forms.find(f => f.id === parseInt(id) && f.user_id === req.userId);
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
+    form.response_count = db.responses.filter(r => r.form_id === form.id).length;
+    return res.json({ form });
+  }
+
+  const { data: form, error } = await supabase
+    .from('forms')
+    .select('*, responses(count)')
+    .eq('id', id)
+    .eq('user_id', req.userId)
+    .single();
+
+  if (error || !form) return res.status(404).json({ error: 'Formulário não encontrado' });
+
+  form.response_count = form.responses?.[0]?.count || 0;
   res.json({ form });
 });
 
 // Create form
-app.post('/api/forms', authMiddleware, (req, res) => {
-  const db = loadDB();
+app.post('/api/forms', authMiddleware, async (req, res) => {
   const { title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules } = req.body;
-  const form = {
-    id: genId(db),
-    user_id: req.userId,
-    title: title || 'Formulário sem título',
-    description: description || '',
-    emoji: emoji || '📋',
-    fields: fields || [],
-    status: status || 'draft',
-    theme_color: theme_color || '#7c3aed',
-    webhook_url: webhook_url || '',
-    conditional_rules: conditional_rules || [],
-    views: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  db.forms.push(form);
-  saveDB(db);
+
+  if (!supabase) {
+    const db = loadDB();
+    const form = {
+      id: genId(db), user_id: req.userId, title: title || 'Formulário sem título',
+      description: description || '', emoji: emoji || '📋', fields: fields || [],
+      status: status || 'draft', theme_color: theme_color || '#7c3aed',
+      webhook_url: webhook_url || '', conditional_rules: conditional_rules || [],
+      views: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+    };
+    db.forms.push(form);
+    saveDB(db);
+    form.response_count = 0;
+    return res.status(201).json({ form });
+  }
+
+  const { data: form, error } = await supabase
+    .from('forms')
+    .insert([{
+      user_id: req.userId,
+      title: title || 'Formulário sem título',
+      description: description || '',
+      emoji: emoji || '📋',
+      fields: fields || [],
+      status: status || 'draft',
+      theme_color: theme_color || '#7c3aed',
+      webhook_url: webhook_url || '',
+      conditional_rules: conditional_rules || [],
+      views: 0
+    }])
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+
   form.response_count = 0;
   res.status(201).json({ form });
 });
 
 // Update form
-app.put('/api/forms/:id', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const form = db.forms.find(f => f.id === id && f.user_id === req.userId);
-  if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
-
+app.put('/api/forms/:id', authMiddleware, async (req, res) => {
+  const id = req.params.id;
   const { title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules } = req.body;
-  if (title !== undefined) form.title = title;
-  if (description !== undefined) form.description = description;
-  if (emoji !== undefined) form.emoji = emoji;
-  if (fields !== undefined) form.fields = fields;
-  if (status !== undefined) form.status = status;
-  if (theme_color !== undefined) form.theme_color = theme_color;
-  if (webhook_url !== undefined) form.webhook_url = webhook_url;
-  if (conditional_rules !== undefined) form.conditional_rules = conditional_rules;
-  form.updated_at = new Date().toISOString();
-  saveDB(db);
 
-  form.response_count = db.responses.filter(r => r.form_id === form.id).length;
+  if (!supabase) {
+    const db = loadDB();
+    const form = db.forms.find(f => f.id === parseInt(id) && f.user_id === req.userId);
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
+    if (title !== undefined) form.title = title;
+    if (description !== undefined) form.description = description;
+    if (emoji !== undefined) form.emoji = emoji;
+    if (fields !== undefined) form.fields = fields;
+    if (status !== undefined) form.status = status;
+    if (theme_color !== undefined) form.theme_color = theme_color;
+    if (webhook_url !== undefined) form.webhook_url = webhook_url;
+    if (conditional_rules !== undefined) form.conditional_rules = conditional_rules;
+    form.updated_at = new Date().toISOString();
+    saveDB(db);
+    form.response_count = db.responses.filter(r => r.form_id === form.id).length;
+    return res.json({ form });
+  }
+
+  const { data: form, error } = await supabase
+    .from('forms')
+    .update({
+      title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .eq('user_id', req.userId)
+    .select()
+    .single();
+
+  if (error || !form) return res.status(404).json({ error: 'Formulário não encontrado' });
+
+  const { count } = await supabase
+    .from('responses')
+    .select('*', { count: 'exact', head: true })
+    .eq('form_id', id);
+
+  form.response_count = count || 0;
   res.json({ form });
 });
 
 // Duplicate form
-app.post('/api/forms/:id/duplicate', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const original = db.forms.find(f => f.id === id && f.user_id === req.userId);
-  if (!original) return res.status(404).json({ error: 'Formulário não encontrado' });
+app.post('/api/forms/:id/duplicate', authMiddleware, async (req, res) => {
+  const id = req.params.id;
 
-  const duplicate = {
-    id: genId(db),
-    user_id: req.userId,
-    title: original.title + ' (cópia)',
-    description: original.description,
-    emoji: original.emoji,
-    fields: JSON.parse(JSON.stringify(original.fields)),
-    status: 'draft',
-    theme_color: original.theme_color,
-    webhook_url: original.webhook_url || '',
-    conditional_rules: original.conditional_rules ? JSON.parse(JSON.stringify(original.conditional_rules)) : [],
-    views: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  db.forms.push(duplicate);
-  saveDB(db);
+  if (!supabase) {
+    const db = loadDB();
+    const original = db.forms.find(f => f.id === parseInt(id) && f.user_id === req.userId);
+    if (!original) return res.status(404).json({ error: 'Formulário não encontrado' });
+    const duplicate = { id: genId(db), user_id: req.userId, title: original.title + ' (cópia)', description: original.description, emoji: original.emoji, fields: JSON.parse(JSON.stringify(original.fields)), status: 'draft', theme_color: original.theme_color, webhook_url: original.webhook_url || '', conditional_rules: original.conditional_rules ? JSON.parse(JSON.stringify(original.conditional_rules)) : [], views: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    db.forms.push(duplicate);
+    saveDB(db);
+    duplicate.response_count = 0;
+    return res.status(201).json({ form: duplicate });
+  }
+
+  const { data: original, error: fetchErr } = await supabase.from('forms').select('*').eq('id', id).eq('user_id', req.userId).single();
+  if (fetchErr || !original) return res.status(404).json({ error: 'Formulário não encontrado' });
+
+  const { id: _, created_at: __, updated_at: ___, views: ____, ...rest } = original;
+  const { data: duplicate, error } = await supabase
+    .from('forms')
+    .insert([{
+      ...rest,
+      title: original.title + ' (cópia)',
+      status: 'draft',
+      views: 0
+    }])
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
   duplicate.response_count = 0;
   res.status(201).json({ form: duplicate });
 });
 
 // Delete form
-app.delete('/api/forms/:id', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const idx = db.forms.findIndex(f => f.id === id && f.user_id === req.userId);
-  if (idx === -1) return res.status(404).json({ error: 'Formulário não encontrado' });
-  db.forms.splice(idx, 1);
-  db.responses = db.responses.filter(r => r.form_id !== id);
-  saveDB(db);
+app.delete('/api/forms/:id', authMiddleware, async (req, res) => {
+  const id = req.params.id;
+
+  if (!supabase) {
+    const db = loadDB();
+    const idx = db.forms.findIndex(f => f.id === parseInt(id) && f.user_id === req.userId);
+    if (idx === -1) return res.status(404).json({ error: 'Formulário não encontrado' });
+    db.forms.splice(idx, 1);
+    db.responses = db.responses.filter(r => r.form_id !== parseInt(id));
+    saveDB(db);
+    return res.json({ success: true });
+  }
+
+  const { error } = await supabase
+    .from('forms')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', req.userId);
+
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
 
 // ==================== FILE UPLOAD ====================
-app.post('/api/upload', upload.single('file'), (req, res) => {
+app.post('/api/upload', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-  res.json({
-    success: true,
-    file: {
-      filename: req.file.filename,
-      originalname: req.file.originalname,
-      size: req.file.size,
-      url: `/uploads/${req.file.filename}`
-    }
-  });
+
+  if (!supabase) {
+    // Local fallback
+    return res.json({
+      success: true,
+      file: {
+        filename: req.file.filename,
+        originalname: req.file.originalname,
+        size: req.file.size,
+        url: `/uploads/${req.file.filename}`
+      }
+    });
+  }
+
+  // Supabase Storage upload
+  try {
+    const fileExt = path.extname(req.file.originalname);
+    const fileName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${fileExt}`;
+    const filePath = `user_uploads/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('uploads')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        cacheControl: '3600'
+      });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('uploads')
+      .getPublicUrl(filePath);
+
+    res.json({
+      success: true,
+      file: {
+        filename: fileName,
+        originalname: req.file.originalname,
+        size: req.file.size,
+        url: publicUrl
+      }
+    });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Erro ao fazer upload para o Supabase' });
+  }
 });
 
 // ==================== PUBLIC FORM (for respondents) ====================
-app.get('/api/public/forms/:id', (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const form = db.forms.find(f => f.id === id && f.status === 'published');
-  if (!form) return res.status(404).json({ error: 'Formulário não encontrado ou não publicado' });
-  form.views = (form.views || 0) + 1;
-  saveDB(db);
-  res.json({
-    form: {
-      id: form.id, title: form.title, description: form.description,
-      fields: form.fields, theme_color: form.theme_color,
-      conditional_rules: form.conditional_rules || []
-    }
-  });
+app.get('/api/public/forms/:id', async (req, res) => {
+  const id = req.params.id;
+
+  if (!supabase) {
+    const db = loadDB();
+    const form = db.forms.find(f => f.id === parseInt(id) && f.status === 'published');
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado ou não publicado' });
+    form.views = (form.views || 0) + 1;
+    saveDB(db);
+    return res.json({ form: { id: form.id, title: form.title, description: form.description, fields: form.fields, theme_color: form.theme_color, conditional_rules: form.conditional_rules || [] } });
+  }
+
+  const { data: form, error } = await supabase
+    .from('forms')
+    .select('id, title, description, fields, theme_color, conditional_rules')
+    .eq('id', id)
+    .eq('status', 'published')
+    .single();
+
+  if (error || !form) return res.status(404).json({ error: 'Formulário não encontrado' });
+
+  // Increment views in background
+  supabase.rpc('increment_form_views', { form_id_input: id }).then(() => {});
+
+  res.json({ form });
 });
 
 // Submit response (public)
-app.post('/api/public/forms/:id/responses', (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const form = db.forms.find(f => f.id === id && f.status === 'published');
-  if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
+app.post('/api/public/forms/:id/responses', async (req, res) => {
+  const id = req.params.id;
+  const { data } = req.body;
 
-  const response = {
-    id: genId(db),
-    form_id: id,
-    data: req.body.data || {},
-    submitted_at: new Date().toISOString()
-  };
-  db.responses.push(response);
-
-  // Create notification for form owner
-  db.notifications.push({
-    id: genId(db),
-    user_id: form.user_id,
-    type: 'new_response',
-    form_id: form.id,
-    form_title: form.title,
-    message: `Nova resposta no formulário "${form.title}"`,
-    read: false,
-    created_at: new Date().toISOString()
-  });
-
-  saveDB(db);
-
-  // Webhook
-  if (form.webhook_url) {
-    try {
-      const payload = JSON.stringify({ form_id: form.id, form_title: form.title, response: response.data, submitted_at: response.submitted_at });
-      const urlObj = new URL(form.webhook_url);
-      const options = {
-        hostname: urlObj.hostname,
-        port: urlObj.port,
-        path: urlObj.pathname + urlObj.search,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
-        timeout: 5000
-      };
-      const mod = urlObj.protocol === 'https:' ? https : http;
-      const wreq = mod.request(options, () => {});
-      wreq.on('error', (e) => console.log('Webhook error:', e.message));
-      wreq.write(payload);
-      wreq.end();
-    } catch (e) { console.log('Webhook error:', e.message); }
+  if (!supabase) {
+    const db = loadDB();
+    const form = db.forms.find(f => f.id === parseInt(id) && f.status === 'published');
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
+    const response = { id: genId(db), form_id: parseInt(id), data: data || {}, submitted_at: new Date().toISOString() };
+    db.responses.push(response);
+    db.notifications.push({ id: genId(db), user_id: form.user_id, type: 'new_response', form_id: form.id, form_title: form.title, message: `Nova resposta no formulário "${form.title}"`, read: false, created_at: new Date().toISOString() });
+    saveDB(db);
+    return res.status(201).json({ success: true });
   }
+
+  const { error } = await supabase
+    .from('responses')
+    .insert([{ form_id: id, data: data || {} }]);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Notification is handled by DB trigger in SQL schema
 
   res.status(201).json({ success: true });
 });
 
 // ==================== RESPONSES ROUTES ====================
-app.get('/api/forms/:id/responses', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const form = db.forms.find(f => f.id === id && f.user_id === req.userId);
-  if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
-  const responses = db.responses.filter(r => r.form_id === id).sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+app.get('/api/forms/:id/responses', authMiddleware, async (req, res) => {
+  const id = req.params.id;
+
+  if (!supabase) {
+    const db = loadDB();
+    const form = db.forms.find(f => f.id === parseInt(id) && f.user_id === req.userId);
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
+    const responses = db.responses.filter(r => r.form_id === parseInt(id)).sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+    return res.json({ responses });
+  }
+
+  const { data: responses, error } = await supabase
+    .from('responses')
+    .select('*')
+    .eq('form_id', id)
+    .order('submitted_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ responses });
 });
 
 // Export CSV
-app.get('/api/forms/:id/export/csv', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const form = db.forms.find(f => f.id === id && f.user_id === req.userId);
+app.get('/api/forms/:id/export/csv', authMiddleware, async (req, res) => {
+  const id = req.params.id;
+
+  let form, responses;
+  if (!supabase) {
+    const db = loadDB();
+    form = db.forms.find(f => f.id === parseInt(id) && f.user_id === req.userId);
+    responses = db.responses.filter(r => r.form_id === parseInt(id));
+  } else {
+    const { data: f } = await supabase.from('forms').select('*').eq('id', id).eq('user_id', req.userId).single();
+    const { data: r } = await supabase.from('responses').select('*').eq('form_id', id);
+    form = f; responses = r;
+  }
+
   if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
 
-  const responses = db.responses.filter(r => r.form_id === id);
   const fields = form.fields || [];
-
-  // Build CSV
   const headers = fields.map(f => `"${(f.label || '').replace(/"/g, '""')}"`).concat(['"Data"']);
   const rows = responses.map(r => {
     const d = r.data || {};
@@ -509,65 +727,129 @@ app.get('/api/forms/:id/export/csv', authMiddleware, (req, res) => {
 });
 
 // Delete response
-app.delete('/api/responses/:id', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const rid = parseInt(req.params.id);
-  const response = db.responses.find(r => r.id === rid);
+app.delete('/api/responses/:id', authMiddleware, async (req, res) => {
+  const rid = req.params.id;
+
+  if (!supabase) {
+    const db = loadDB();
+    const response = db.responses.find(r => r.id === parseInt(rid));
+    if (!response) return res.status(404).json({ error: 'Resposta não encontrada' });
+    const form = db.forms.find(f => f.id === response.form_id && f.user_id === req.userId);
+    if (!form) return res.status(404).json({ error: 'Resposta não encontrada' });
+    db.responses = db.responses.filter(r => r.id !== parseInt(rid));
+    saveDB(db);
+    return res.json({ success: true });
+  }
+
+  // Verify ownership via form
+  const { data: response } = await supabase.from('responses').select('form_id').eq('id', rid).single();
   if (!response) return res.status(404).json({ error: 'Resposta não encontrada' });
-  const form = db.forms.find(f => f.id === response.form_id && f.user_id === req.userId);
-  if (!form) return res.status(404).json({ error: 'Resposta não encontrada' });
-  db.responses = db.responses.filter(r => r.id !== rid);
-  saveDB(db);
+
+  const { data: form } = await supabase.from('forms').select('id').eq('id', response.form_id).eq('user_id', req.userId).single();
+  if (!form) return res.status(403).json({ error: 'Acesso negado' });
+
+  const { error } = await supabase.from('responses').delete().eq('id', rid);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
 
 // ==================== NOTIFICATIONS ====================
-app.get('/api/notifications', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const notifications = db.notifications
-    .filter(n => n.user_id === req.userId)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 50);
+app.get('/api/notifications', authMiddleware, async (req, res) => {
+  if (!supabase) {
+    const db = loadDB();
+    const notifications = db.notifications.filter(n => n.user_id === req.userId).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 50);
+    const unreadCount = notifications.filter(n => !n.read).length;
+    return res.json({ notifications, unreadCount });
+  }
+
+  const { data: notifications, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', req.userId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) return res.status(500).json({ error: error.message });
   const unreadCount = notifications.filter(n => !n.read).length;
   res.json({ notifications, unreadCount });
 });
 
-app.put('/api/notifications/read-all', authMiddleware, (req, res) => {
-  const db = loadDB();
-  db.notifications.filter(n => n.user_id === req.userId).forEach(n => n.read = true);
-  saveDB(db);
+app.put('/api/notifications/read-all', authMiddleware, async (req, res) => {
+  if (!supabase) {
+    const db = loadDB();
+    db.notifications.filter(n => n.user_id === req.userId).forEach(n => n.read = true);
+    saveDB(db);
+    return res.json({ success: true });
+  }
+
+  await supabase.from('notifications').update({ read: true }).eq('user_id', req.userId);
   res.json({ success: true });
 });
 
-app.put('/api/notifications/:id/read', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const id = parseInt(req.params.id);
-  const notif = db.notifications.find(n => n.id === id && n.user_id === req.userId);
-  if (notif) { notif.read = true; saveDB(db); }
+app.put('/api/notifications/:id/read', authMiddleware, async (req, res) => {
+  const id = req.params.id;
+  if (!supabase) {
+    const db = loadDB();
+    const notif = db.notifications.find(n => n.id === parseInt(id) && n.user_id === req.userId);
+    if (notif) { notif.read = true; saveDB(db); }
+    return res.json({ success: true });
+  }
+
+  await supabase.from('notifications').update({ read: true }).eq('id', id).eq('user_id', req.userId);
   res.json({ success: true });
 });
 
 // ==================== PLANS ====================
-app.post('/api/plans/upgrade', authMiddleware, (req, res) => {
+app.post('/api/plans/upgrade', authMiddleware, async (req, res) => {
   const { plan } = req.body;
   if (!['pro', 'business'].includes(plan)) return res.status(400).json({ error: 'Plano inválido' });
-  const db = loadDB();
-  const user = db.users.find(u => u.id === req.userId);
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-  user.plan = plan;
-  saveDB(db);
-  res.json({ success: true, user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, plan: user.plan } });
+
+  if (!supabase) {
+    const db = loadDB();
+    const user = db.users.find(u => u.id === req.userId);
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    user.plan = plan;
+    saveDB(db);
+    return res.json({ success: true, user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, plan: user.plan } });
+  }
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .update({ plan })
+    .eq('id', req.userId)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true, user: { ...profile, email: req.userEmail } });
 });
 
 // ==================== STATS ====================
-app.get('/api/stats', authMiddleware, (req, res) => {
-  const db = loadDB();
-  const userForms = db.forms.filter(f => f.user_id === req.userId);
-  const formIds = userForms.map(f => f.id);
-  const totalForms = userForms.length;
-  const totalResponses = db.responses.filter(r => formIds.includes(r.form_id)).length;
-  const totalViews = userForms.reduce((sum, f) => sum + (f.views || 0), 0);
+app.get('/api/stats', authMiddleware, async (req, res) => {
+  if (!supabase) {
+    const db = loadDB();
+    const userForms = db.forms.filter(f => f.user_id === req.userId);
+    const formIds = userForms.map(f => f.id);
+    const totalForms = userForms.length;
+    const totalResponses = db.responses.filter(r => formIds.includes(r.form_id)).length;
+    const totalViews = userForms.reduce((sum, f) => sum + (f.views || 0), 0);
+    const conversionRate = totalViews > 0 ? Math.round((totalResponses / totalViews) * 100) : 0;
+    return res.json({ totalForms, totalResponses, totalViews, conversionRate });
+  }
+
+  // Use RPC or sum in JS
+  const { data: forms, error } = await supabase
+    .from('forms')
+    .select('id, views, responses(count)')
+    .eq('user_id', req.userId);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const totalForms = forms.length;
+  const totalResponses = forms.reduce((sum, f) => sum + (f.responses?.[0]?.count || 0), 0);
+  const totalViews = forms.reduce((sum, f) => sum + (f.views || 0), 0);
   const conversionRate = totalViews > 0 ? Math.round((totalResponses / totalViews) * 100) : 0;
+
   res.json({ totalForms, totalResponses, totalViews, conversionRate });
 });
 

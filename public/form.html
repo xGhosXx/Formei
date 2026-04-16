@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário - Formei</title>
+  <meta name="description" content="Preencha este formulário criado com o Formei">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --accent: #7c3aed;
+      --accent-light: #8b5cf6;
+      --bg: #09090b;
+      --bg-card: #0f0f12;
+      --bg-input: #16161a;
+      --border: rgba(255,255,255,0.08);
+      --text: #fafafa;
+      --text-muted: #71717a;
+      --text-secondary: #d4d4d8;
+      --green: #10b981;
+      --red: #ef4444;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+    .form-wrapper {
+      width: 100%;
+      max-width: 640px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .form-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .form-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .form-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .form-field {
+      margin-bottom: 24px;
+      animation: fadeIn 0.3s ease both;
+    }
+    .form-field.hidden { display: none; }
+    .field-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+    .field-label .required {
+      color: var(--red);
+      margin-left: 4px;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: white;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .field-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+    }
+    .field-input::placeholder { color: var(--text-muted); }
+    textarea.field-input { min-height: 100px; resize: vertical; }
+    select.field-input { cursor: pointer; }
+
+    /* Radio / Checkbox */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .option-item:hover { border-color: rgba(255,255,255,0.15); }
+    .option-item.selected {
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.08);
+    }
+    .option-radio {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .option-item.selected .option-radio {
+      border-color: var(--accent);
+    }
+    .option-item.selected .option-radio::after {
+      content: '';
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .option-check {
+      width: 18px; height: 18px;
+      border-radius: 4px;
+      border: 2px solid var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .option-item.selected .option-check {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+    .option-item.selected .option-check::after {
+      content: '✓';
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Rating */
+    .rating-stars {
+      display: flex;
+      gap: 8px;
+    }
+    .rating-star {
+      font-size: 28px;
+      cursor: pointer;
+      transition: transform 0.15s;
+      filter: grayscale(1) opacity(0.3);
+    }
+    .rating-star:hover { transform: scale(1.2); }
+    .rating-star.active {
+      filter: none;
+    }
+
+    /* Scale */
+    .scale-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .scale-btn {
+      width: 44px; height: 44px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .scale-btn:hover { border-color: var(--accent); color: white; }
+    .scale-btn.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* File upload */
+    .file-drop {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .file-drop:hover { border-color: var(--accent); }
+    .file-drop.has-file { border-color: var(--green); background: rgba(16,185,129,0.05); }
+    .file-drop-icon { font-size: 32px; margin-bottom: 8px; }
+    .file-drop-text { font-size: 13px; color: var(--text-muted); }
+    .file-drop-name { font-size: 13px; color: var(--green); font-weight: 600; margin-top: 8px; }
+    .file-drop input[type=file] { display: none; }
+
+    /* Submit */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .submit-btn .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    /* Success */
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 40px;
+      animation: scaleIn 0.5s ease;
+    }
+    .success-screen.active { display: block; }
+    .success-icon {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.15);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 36px;
+    }
+    .success-screen h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .success-screen p { color: var(--text-muted); font-size: 15px; }
+
+    /* Error */
+    .error-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 40px;
+    }
+    .error-screen.active { display: block; }
+    .error-icon { font-size: 48px; margin-bottom: 16px; }
+    .error-screen h2 { font-size: 22px; margin-bottom: 8px; }
+    .error-screen p { color: var(--text-muted); }
+
+    /* Loading */
+    .loading-screen {
+      text-align: center;
+      padding: 80px 40px;
+    }
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    /* Branding footer */
+    .branding {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .branding a {
+      color: var(--accent-light);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .field-error {
+      font-size: 12px;
+      color: var(--red);
+      margin-top: 6px;
+      display: none;
+    }
+    .field-error.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="form-wrapper">
+  <!-- Loading -->
+  <div id="loading" class="form-card loading-screen">
+    <div class="loading-spinner"></div>
+    <p style="color: var(--text-muted)">Carregando formulário...</p>
+  </div>
+
+  <!-- Error -->
+  <div id="error-screen" class="form-card error-screen">
+    <div class="error-icon">😔</div>
+    <h2>Formulário não encontrado</h2>
+    <p>Este formulário não existe ou não está publicado.</p>
+  </div>
+
+  <!-- Form -->
+  <div id="form-container" style="display:none">
+    <div class="form-header">
+      <h1 id="form-title"></h1>
+      <p id="form-desc"></p>
+    </div>
+    <div class="form-card">
+      <div id="fields-container"></div>
+      <button class="submit-btn" id="submit-btn" onclick="submitForm()">Enviar resposta</button>
+    </div>
+    <div class="branding">
+      Criado com <a href="/">Formei</a> ✨
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div id="success-screen" class="form-card success-screen">
+    <div class="success-icon">✅</div>
+    <h2>Resposta enviada!</h2>
+    <p>Obrigado por preencher o formulário.</p>
+    <button class="submit-btn" style="margin-top:24px; max-width:200px; margin-left:auto; margin-right:auto;" onclick="location.reload()">Enviar outra resposta</button>
+  </div>
+</div>
+
+<script>
+  // Supabase config - same as in index.html
+  const SUPABASE_URL = 'https://rjjsjxzoyxerztxxovjp.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_LtLhUq0cZNG-N49NXpUj2g_Lw9dPQo-';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let formData = null;
+  let formValues = {};
+  let conditionalRules = [];
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const formId = urlParams.get('id') || window.location.hash.slice(1) || window.location.pathname.split('/').pop();
+
+  async function loadForm() {
+    try {
+      // Increment views via RPC (ignore error if fails)
+      try {
+        await supabaseClient.rpc('increment_form_views', { form_id_input: parseInt(formId) });
+      } catch (rpcErr) {
+        console.warn('View counter error:', rpcErr);
+      }
+
+      // Load form data
+      const { data: form, error } = await supabaseClient.from('forms')
+        .select('id, title, description, fields, theme_color, conditional_rules')
+        .eq('id', parseInt(formId))
+        .eq('status', 'published')
+        .single();
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      if (!form) throw new Error('Not found');
+
+      formData = form;
+      conditionalRules = form.conditional_rules || [];
+
+      // Apply theme
+      const color = formData.theme_color || '#7c3aed';
+      document.documentElement.style.setProperty('--accent', color);
+      document.getElementById('submit-btn').style.background = `linear-gradient(135deg, ${color}, ${adjustColor(color, -20)})`;
+      document.getElementById('submit-btn').style.boxShadow = `0 4px 16px ${color}40`;
+
+      document.getElementById('form-title').textContent = formData.title;
+      document.getElementById('form-desc').textContent = formData.description || '';
+      document.title = formData.title + ' - Formei';
+
+      renderFields();
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('form-container').style.display = 'block';
+    } catch (err) {
+      console.error('Final load error:', err);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-screen').classList.add('active');
+    }
+  }
+
+  function adjustColor(hex, amount) {
+    hex = hex.replace('#', '');
+    const r = Math.max(0, Math.min(255, parseInt(hex.substr(0,2),16) + amount));
+    const g = Math.max(0, Math.min(255, parseInt(hex.substr(2,2),16) + amount));
+    const b = Math.max(0, Math.min(255, parseInt(hex.substr(4,2),16) + amount));
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+  }
+
+  function renderFields() {
+    const container = document.getElementById('fields-container');
+    container.innerHTML = '';
+
+    formData.fields.forEach((field, idx) => {
+      const div = document.createElement('div');
+      div.className = 'form-field';
+      div.id = `field-wrap-${field.id}`;
+      div.style.animationDelay = `${idx * 0.05}s`;
+
+      const reqMark = field.required ? '<span class="required">*</span>' : '';
+      let html = `<label class="field-label">${field.label || 'Campo'}${reqMark}</label>`;
+
+      switch (field.type) {
+        case 'short_text':
+          html += `<input type="text" class="field-input" placeholder="${field.placeholder || ''}" data-id="${field.id}" oninput="updateValue('${field.id}', this.value)">`;
+          break;
+        case 'long_text':
+          html += `<textarea class="field-input" placeholder="${field.placeholder || ''}" data-id="${field.id}" oninput="updateValue('${field.id}', this.value)"></textarea>`;
+          break;
+        case 'email':
+          html += `<input type="email" class="field-input" placeholder="${field.placeholder || 'email@exemplo.com'}" data-id="${field.id}" oninput="updateValue('${field.id}', this.value)">`;
+          break;
+        case 'number':
+          html += `<input type="number" class="field-input" placeholder="${field.placeholder || '0'}" data-id="${field.id}" oninput="updateValue('${field.id}', this.value)">`;
+          break;
+        case 'phone':
+          html += `<input type="tel" class="field-input" placeholder="${field.placeholder || '(00) 00000-0000'}" data-id="${field.id}" oninput="updateValue('${field.id}', this.value)">`;
+          break;
+        case 'date':
+          html += `<input type="date" class="field-input" data-id="${field.id}" oninput="updateValue('${field.id}', this.value)">`;
+          break;
+        case 'multiple_choice':
+          html += `<div class="options-list">${(field.options||[]).map((opt,i) =>
+            `<div class="option-item" onclick="selectRadio('${field.id}', ${i}, this)">
+              <div class="option-radio"></div><span>${opt}</span>
+            </div>`).join('')}</div>`;
+          break;
+        case 'checkboxes':
+          html += `<div class="options-list">${(field.options||[]).map((opt,i) =>
+            `<div class="option-item" onclick="toggleCheck('${field.id}', '${opt}', this)">
+              <div class="option-check"></div><span>${opt}</span>
+            </div>`).join('')}</div>`;
+          break;
+        case 'dropdown':
+          html += `<select class="field-input" data-id="${field.id}" onchange="updateValue('${field.id}', this.value)">
+            <option value="">Selecione...</option>
+            ${(field.options||[]).map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+          </select>`;
+          break;
+        case 'rating':
+          html += `<div class="rating-stars">${[1,2,3,4,5].map(v =>
+            `<span class="rating-star" onclick="setRating('${field.id}', ${v})">⭐</span>`).join('')}</div>`;
+          break;
+        case 'scale':
+          html += `<div class="scale-row">${Array.from({length:11},(_,i) =>
+            `<button class="scale-btn" type="button" onclick="setScale('${field.id}', ${i}, this)">${i}</button>`).join('')}</div>`;
+          break;
+        case 'file_upload':
+          html += `<div class="file-drop" id="drop-${field.id}" onclick="document.getElementById('file-${field.id}').click()">
+            <div class="file-drop-icon">📎</div>
+            <div class="file-drop-text">Clique para enviar arquivo (max 10MB)</div>
+            <div class="file-drop-name" id="fname-${field.id}"></div>
+            <input type="file" id="file-${field.id}" onchange="handleFile('${field.id}', this)">
+          </div>`;
+          break;
+      }
+
+      html += `<div class="field-error" id="error-${field.id}"></div>`;
+      div.innerHTML = html;
+      container.appendChild(div);
+    });
+
+    applyConditionalRules();
+  }
+
+  function updateValue(id, val) {
+    formValues[id] = val;
+    applyConditionalRules();
+  }
+
+  function selectRadio(fieldId, idx, el) {
+    const parent = el.parentElement;
+    parent.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    const field = formData.fields.find(f => f.id === fieldId);
+    formValues[fieldId] = field.options[idx];
+    applyConditionalRules();
+  }
+
+  function toggleCheck(fieldId, val, el) {
+    el.classList.toggle('selected');
+    if (!formValues[fieldId]) formValues[fieldId] = [];
+    if (el.classList.contains('selected')) {
+      formValues[fieldId].push(val);
+    } else {
+      formValues[fieldId] = formValues[fieldId].filter(v => v !== val);
+    }
+    applyConditionalRules();
+  }
+
+  function setRating(fieldId, val) {
+    formValues[fieldId] = val;
+    const field = document.getElementById(`field-wrap-${fieldId}`);
+    const starEls = field.querySelectorAll('.rating-star');
+    starEls.forEach((s, i) => {
+      s.classList.toggle('active', i < val);
+    });
+    applyConditionalRules();
+  }
+
+  function setScale(fieldId, val, el) {
+    formValues[fieldId] = val;
+    const field = document.getElementById(`field-wrap-${fieldId}`);
+    field.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    applyConditionalRules();
+  }
+
+  async function handleFile(fieldId, input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Arquivo muito grande (máximo 10MB)');
+      return;
+    }
+
+    const nameEl = document.getElementById(`fname-${fieldId}`);
+    const dropEl = document.getElementById(`drop-${fieldId}`);
+    nameEl.textContent = `Enviando: ${file.name}...`;
+
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2,6)}.${ext}`;
+      const { data, error } = await supabaseClient.storage
+        .from('uploads')
+        .upload(fileName, file);
+      if (error) throw error;
+      const { data: urlData } = supabaseClient.storage.from('uploads').getPublicUrl(fileName);
+      formValues[fieldId] = urlData.publicUrl;
+      nameEl.textContent = `✅ ${file.name}`;
+      dropEl.classList.add('has-file');
+    } catch {
+      nameEl.textContent = 'Erro ao enviar arquivo';
+    }
+  }
+
+  function applyConditionalRules() {
+    if (!conditionalRules || conditionalRules.length === 0) return;
+
+    conditionalRules.forEach(rule => {
+      const targetWrap = document.getElementById(`field-wrap-${rule.targetFieldId}`);
+      if (!targetWrap) return;
+
+      const sourceValue = formValues[rule.sourceFieldId];
+      let conditionMet = false;
+
+      switch (rule.operator) {
+        case 'equals':
+          conditionMet = String(sourceValue) === String(rule.value);
+          break;
+        case 'not_equals':
+          conditionMet = String(sourceValue) !== String(rule.value);
+          break;
+        case 'contains':
+          conditionMet = String(sourceValue || '').includes(rule.value);
+          break;
+        case 'not_empty':
+          conditionMet = !!sourceValue && String(sourceValue).length > 0;
+          break;
+        case 'is_empty':
+          conditionMet = !sourceValue || String(sourceValue).length === 0;
+          break;
+        case 'greater_than':
+          conditionMet = Number(sourceValue) > Number(rule.value);
+          break;
+        case 'less_than':
+          conditionMet = Number(sourceValue) < Number(rule.value);
+          break;
+      }
+
+      if (rule.action === 'show') {
+        targetWrap.classList.toggle('hidden', !conditionMet);
+      } else if (rule.action === 'hide') {
+        targetWrap.classList.toggle('hidden', conditionMet);
+      }
+    });
+  }
+
+  async function submitForm() {
+    // Validate required fields
+    let valid = true;
+    formData.fields.forEach(field => {
+      const errEl = document.getElementById(`error-${field.id}`);
+      const wrap = document.getElementById(`field-wrap-${field.id}`);
+      if (errEl) { errEl.classList.remove('visible'); errEl.textContent = ''; }
+
+      // Skip hidden fields
+      if (wrap && wrap.classList.contains('hidden')) return;
+
+      if (field.required) {
+        const val = formValues[field.id];
+        if (!val || (Array.isArray(val) && val.length === 0)) {
+          if (errEl) {
+            errEl.textContent = 'Este campo é obrigatório';
+            errEl.classList.add('visible');
+          }
+          valid = false;
+        }
+      }
+
+      if (field.type === 'email' && formValues[field.id]) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formValues[field.id])) {
+          if (errEl) {
+            errEl.textContent = 'Email inválido';
+            errEl.classList.add('visible');
+          }
+          valid = false;
+        }
+      }
+    });
+
+    if (!valid) return;
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Enviando...';
+
+    try {
+      const { error } = await supabaseClient.from('responses')
+        .insert({ form_id: parseInt(formId), data: formValues });
+
+      if (error) throw error;
+
+      document.getElementById('form-container').style.display = 'none';
+      document.getElementById('success-screen').classList.add('active');
+    } catch {
+      alert('Erro ao enviar resposta. Tente novamente.');
+      btn.disabled = false;
+      btn.innerHTML = 'Enviar resposta';
+    }
+  }
+
+  loadForm();
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+node_modules/
+.env
+.gemini/
+*.log
+dist/
+temp/
+C:\Users\Ragnar\.gemini\antigravity\brain\
+C:\Users\Ragnar\.gemini\antigravity\knowledge\

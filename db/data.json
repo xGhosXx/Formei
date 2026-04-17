@@ -8,11 +8,66 @@
       "avatar_color": "#06b6d4",
       "plan": "free",
       "created_at": "2026-04-15T02:55:50.532Z"
+    },
+    {
+      "id": 7,
+      "name": "peido",
+      "email": "peido@gmail.com",
+      "password": "$2a$10$TL1hKe1CXNP7tUZEg0nBsO8UKrPudnQwtWlXGYoy.rUB.j6V1l/p.",
+      "avatar_color": "#7c3aed",
+      "plan": "free",
+      "created_at": "2026-04-17T19:08:43.271Z"
+    },
+    {
+      "id": 8,
+      "name": "Test User",
+      "email": "test@test.com",
+      "password": "$2a$10$KaAFlZk.4I71bl./.bXbdexoqizi2Rliku2OBCoJMliROERudZINO",
+      "avatar_color": "#7c3aed",
+      "plan": "free",
+      "created_at": "2026-04-17T19:10:03.972Z"
     }
   ],
-  "forms": [],
+  "forms": [
+    {
+      "id": 9,
+      "user_id": 8,
+      "title": "Novo Formulário",
+      "description": "",
+      "emoji": "✏️",
+      "fields": [
+        {
+          "id": "field_ckwztqmyc",
+          "type": "short_text",
+          "label": "Pergunta de Texto Curto",
+          "required": false,
+          "options": [],
+          "placeholder": ""
+        },
+        {
+          "id": "field_n9gfone5i",
+          "type": "multiple_choice",
+          "label": "Qual sua fruta favorita?",
+          "required": false,
+          "options": [
+            "Opção 1",
+            "Opção 2",
+            "Opção 3"
+          ],
+          "placeholder": ""
+        }
+      ],
+      "status": "published",
+      "theme_color": "{\"primaryColor\":\"#ec4899\",\"bgColor\":\"#1c0612\",\"cardBg\":\"#4c0519\",\"textColor\":\"#fdf2f8\",\"labelColor\":\"#fbcfe8\",\"inputBg\":\"#831843\",\"inputBorder\":\"#be185d\",\"fontFamily\":\"Inter\",\"fontSize\":\"15\",\"borderRadius\":\"12\",\"buttonStyle\":\"filled\",\"buttonRadius\":\"10\",\"coverImage\":\"\",\"logo\":\"\",\"fieldSpacing\":\"16\",\"cardPadding\":\"40\",\"cardBorder\":true,\"cardShadow\":true,\"bgGradient\":\"linear-gradient(135deg, #1a0a14 0%, #2d0a1a 100%)\",\"inputStyle\":\"outlined\"}",
+      "webhook_url": "",
+      "conditional_rules": [],
+      "views": 0,
+      "created_at": "2026-04-17T19:12:04.953Z",
+      "updated_at": "2026-04-17T19:12:04.953Z"
+    }
+  ],
   "responses": [],
-  "nextId": 7,
+  "nextId": 10,
   "notifications": [
     {
       "id": 6,

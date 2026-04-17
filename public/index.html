@@ -6700,21 +6700,52 @@
       }
     };
 
-    // ==================== FORGOT PASSWORD (Supabase) ====================
+    // ==================== FORGOT PASSWORD (API) ====================
     handleForgotPassword = async function(e) {
       e.preventDefault();
       const email = document.getElementById('forgot-email').value;
       const btn = document.getElementById('forgot-btn');
       btn.disabled = true;
-      btn.textContent = 'Enviando...';
+      btn.innerHTML = '<div class="spinner"></div> Enviando...';
       try {
-        // Mocked - API not implemented
-        showToast('Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+        await fetchAPI('/api/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify({ email })
+        });
+        showToast('Sucesso! Se o email existir, você receberá um link.', 'success');
       } catch (err) {
         showToast('Erro: ' + err.message, 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Enviar link de recuperação';
+        btn.innerHTML = 'Enviar link de recuperação';
+      }
+    };
+
+    handleResetPassword = async function(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById('reset-new-pw').value;
+      const token = document.getElementById('reset-token').value;
+      const btn = e.target.querySelector('button');
+      
+      if (!token) return showToast('Token de recuperação ausente.', 'error');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Redefinindo...';
+      
+      try {
+        await fetchAPI('/api/auth/reset-password', {
+          method: 'POST',
+          body: JSON.stringify({ token, newPassword })
+        });
+        showToast('Senha redefinida com sucesso! Redirecionando...', 'success');
+        setTimeout(() => {
+          window.location.href = window.location.pathname; // Reload without params
+        }, 2000);
+      } catch (err) {
+        showToast('Erro: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Redefinir senha';
       }
     };
 
@@ -6753,6 +6784,20 @@
 
     // ==================== INIT ====================
     (async function init() {
+      // Check for recovery token (?token=xxx or #access_token=xxx&type=recovery)
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      
+      const recoveryToken = urlParams.get('token') || (hashParams.get('type') === 'recovery' ? hashParams.get('access_token') : null);
+      
+      if (recoveryToken) {
+        showForgotPassword();
+        document.getElementById('forgot-form-section').style.display = 'none';
+        document.getElementById('reset-form-section').style.display = 'block';
+        document.getElementById('reset-token').value = recoveryToken;
+        return;
+      }
+
       const token = getToken();
       if (!token) return showLogin();
       

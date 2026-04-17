@@ -335,7 +335,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${req.headers.origin}/reset-password.html`
+    redirectTo: `${req.headers.origin}/index.html`
   });
 
   if (error) return res.status(400).json({ error: error.message });

@@ -646,6 +646,128 @@
     }
     .close-modal:hover { background: var(--bg-surface-3); color: white; }
 
+    /* --- Custom Confirm/Prompt Modal --- */
+    #confirm-modal .modal-content {
+      max-width: 420px;
+      padding: 0;
+      overflow: hidden;
+      background: rgba(21, 21, 30, 0.95);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    .modal-confirm-body {
+      padding: 32px;
+    }
+    #confirm-modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: white;
+    }
+    #confirm-modal-message {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .modal-prompt-area {
+      margin-top: 16px;
+    }
+    .modal-field-input {
+      width: 100%;
+      background: var(--bg-surface-2);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      color: white;
+      font-size: 15px;
+      transition: all var(--transition-fast);
+      margin-top: 12px;
+    }
+    .modal-field-input:focus {
+      border-color: var(--accent);
+      background: var(--bg-surface-3);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+      outline: none;
+    }
+    .modal-confirm-footer {
+      padding: 20px 32px;
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    .modal-btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      border: 1px solid transparent;
+    }
+    .modal-btn.primary {
+      background: var(--accent);
+      color: white;
+    }
+    .modal-btn.primary:hover {
+      background: var(--accent-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+    .modal-btn.secondary {
+      background: var(--bg-surface-3);
+      color: var(--text-secondary);
+      border-color: var(--border-color);
+    }
+    .modal-btn.secondary:hover {
+      background: var(--bg-surface-4);
+      color: white;
+    }
+    .modal-btn.danger {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+    .modal-btn.danger:hover {
+      background: #ef4444;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Specialized Select List (Folders) */
+    .folder-select-list {
+      max-height: 240px;
+      overflow-y: auto;
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-right: 4px;
+    }
+    .folder-select-list::-webkit-scrollbar { width: 5px; }
+    .folder-select-list::-webkit-scrollbar-thumb { background: var(--bg-surface-4); border-radius: 10px; }
+    .folder-select-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+    }
+    .folder-select-item:hover {
+      background: var(--bg-surface-2);
+    }
+    .folder-select-item.selected {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+    }
+    .folder-select-icon { font-size: 18px; }
+    .folder-select-name { font-size: 14px; font-weight: 500; }
+
     .creation-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -3932,20 +4054,22 @@
 
   <!-- Global Confirmation Modal -->
   <div id="confirm-modal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
+    <div class="modal-content">
+      <div class="modal-confirm-body">
         <h3 id="confirm-modal-title">Confirmar</h3>
-      </div>
-      <div class="modal-body">
         <p id="confirm-modal-message">Tem certeza?</p>
-        <div id="modal-prompt-area" style="display:none;">
-          <input type="text" id="confirm-modal-input" class="field-input" placeholder="...">
+        
+        <div id="modal-prompt-area" class="modal-prompt-area" style="display:none">
+          <input type="text" id="confirm-modal-input" class="modal-field-input" placeholder="...">
         </div>
-        <div id="modal-select-area" style="display:none;">
-          <div id="folder-selection-list" class="folder-select-list"></div>
+
+        <div id="modal-select-area" style="display:none">
+          <div id="folder-selection-list" class="folder-select-list">
+            <!-- Folders will be rendered here -->
+          </div>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-confirm-footer">
         <button id="confirm-modal-cancel" class="modal-btn secondary">Cancelar</button>
         <button id="confirm-modal-confirm" class="modal-btn primary">Confirmar</button>
       </div>

@@ -16,5 +16,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "playwright": "^1.59.1"
+  },
+  "devDependencies": {
+    "supabase": "^2.92.0"
   }
 }

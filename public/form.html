@@ -569,16 +569,6 @@
           el.classList.add(`style-${design.inputStyle}`);
         });
       }
-        if (design.inputStyle === 'underline') {
-          document.querySelectorAll('.field-input').forEach(el => {
-            el.style.border = 'none';
-            el.style.borderBottom = `2px solid ${design.inputBorder || 'rgba(255,255,255,0.08)'}`;
-            el.style.borderRadius = '0';
-          });
-        } else if (design.inputStyle === 'filled') {
-          document.querySelectorAll('.field-input').forEach(el => { el.style.border = 'none'; });
-        }
-      }
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('form-container').style.display = 'block';

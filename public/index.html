@@ -1630,18 +1630,20 @@
     
     .db-card-menu {
       position: absolute;
-      bottom: calc(100% + 5px);
+      bottom: calc(100% + 8px);
       right: 0;
-      background: #18181b;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      background: rgba(24, 24, 27, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       display: none;
       flex-direction: column;
-      min-width: 150px;
+      min-width: 160px;
       z-index: 999;
       overflow: hidden;
-      animation: fadeIn var(--transition-fast);
+      animation: dbFadeInUp 0.2s ease;
     }
     .db-card-menu.active { display: flex; }
     .db-card-menu-item {
@@ -1650,12 +1652,13 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      color: var(--text-secondary);
-      transition: all var(--transition-fast);
+      color: #d4d4d8;
+      transition: all 0.2s;
       cursor: pointer;
     }
-    .db-card-menu-item:hover { background: var(--bg-surface-2); color: white; }
-    .db-card-menu-item.danger { color: var(--red); }
+    .db-card-menu-item:hover { background: rgba(255,255,255,0.08); color: white; }
+    .db-card-menu-item.danger { color: #ef4444; }
+    .db-card-menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); }
     .db-badge-trash { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
 
     .db-nav-sub { margin-left: 32px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
@@ -1670,9 +1673,10 @@
     .folder-delete-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
     .db-card-folder-badge {
-      display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-muted);
-      margin-top: 4px; padding: 2px 6px; background: rgba(255,255,255,0.03); border-radius: 4px;
-      width: fit-content;
+      display: flex; align-items: center; gap: 4px; font-size: 10px; color: #a1a1aa;
+      margin-top: 6px; padding: 3px 8px; background: rgba(255,255,255,0.05); border-radius: 6px;
+      width: fit-content; border: 1px solid rgba(255,255,255,0.03);
+      font-weight: 500;
     }
     .settings-header-actions { display: flex; gap: 4px; }
     
@@ -2647,42 +2651,74 @@
     /* FORM CARDS */
     .forms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
     .db-form-card {
-      background: #18181c; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; cursor: pointer;
-      animation: dbFadeInUp 0.4s ease backwards; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      border: 1px solid rgba(255,255,255,0.04);
+      background: linear-gradient(145deg, #18181c, #141417); border-radius: 16px; 
+      display: flex; flex-direction: column; cursor: pointer;
+      animation: dbFadeInUp 0.4s ease backwards; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
     }
-    .db-form-card:hover { background: #1d1d22; transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.1); }
-    .db-card-top { padding: 16px 16px 8px 16px; display: flex; justify-content: space-between; align-items:flex-start; color: #a1a1aa; }
-    .db-card-body { padding: 12px 16px 40px 16px; display:flex; align-items:center; justify-content:center; flex:1; }
-    .db-card-title { font-size: 14px; font-weight: 500; color: #e4e4e7; text-align: center; }
+    .db-form-card:hover { 
+      background: linear-gradient(145deg, #1d1d22, #18181c); 
+      transform: translateY(-4px); 
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3), 0 10px 10px -5px rgba(0,0,0,0.1); 
+      border-color: rgba(255,255,255,0.12); 
+    }
+    .db-card-top { padding: 20px 20px 0 20px; display: flex; justify-content: space-between; align-items:flex-start; }
+    .db-card-emoji { 
+      font-size: 24px; width: 48px; height: 48px; 
+      display: flex; align-items: center; justify-content: center; 
+      background: rgba(255,255,255,0.03); border-radius: 12px;
+      transition: all 0.3s;
+    }
+    .db-form-card:hover .db-card-emoji { transform: scale(1.1); background: rgba(255,255,255,0.06); }
+    .db-card-body { padding: 24px 20px 48px 20px; display:flex; flex-direction: column; align-items:center; justify-content:center; flex:1; }
+    .db-card-title { font-size: 15px; font-weight: 600; color: #f4f4f5; text-align: center; line-height: 1.4; }
     .db-card-footer {
-      display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
-      border-top: 1px solid rgba(255,255,255,0.04); font-size: 13px; color: #a1a1aa; background: #16161a;
+      display: flex; align-items: center; justify-content: space-between; padding: 14px 20px;
+      border-top: 1px solid rgba(255,255,255,0.05); font-size: 12px; color: #a1a1aa; 
+      background: rgba(255,255,255,0.02);
+      border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;
     }
-    .db-card-responses b { color: white; font-weight: 600; margin-left: 2px;}
-    .db-card-menu-btn { background: transparent; border: none; color: #a1a1aa; cursor: pointer; display:flex; padding: 4px; border-radius: 4px; transition:0.2s; }
-    .db-card-menu-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+    .db-card-responses b { color: #f4f4f5; font-weight: 700; margin-left: 2px;}
+    .db-card-menu-btn { 
+      background: rgba(255,255,255,0.03); border: none; color: #71717a; 
+      cursor: pointer; display:flex; padding: 6px; border-radius: 8px; transition:0.2s; 
+    }
+    .db-card-menu-btn:hover { background: rgba(255,255,255,0.08); color: white; }
     
-    .form-status-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 8px; display:inline-block; }
-    .form-status-badge.draft { background: rgba(255,255,255,0.1); color: #a1a1aa; }
-    .form-status-badge.published { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .form-status-badge { 
+      font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 700; 
+      letter-spacing: 0.05em; text-transform: uppercase; display:inline-block;
+    }
+    .form-status-badge.draft { background: rgba(255,255,255,0.06); color: #71717a; }
+    .form-status-badge.published { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.1); }
 
     /* LIST CARDS */
     .forms-list { display: flex; flex-direction: column; gap: 8px; }
     .db-list-item {
-      background: #18181c; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; overflow: hidden; cursor: pointer;
-      animation: dbFadeInUp 0.4s ease backwards; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      border: 1px solid rgba(255,255,255,0.04); padding: 12px 16px;
+      background: linear-gradient(90deg, #18181c, #16161a); border-radius: 12px; 
+      display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+      animation: dbFadeInUp 0.4s ease backwards; transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,0.05); padding: 14px 20px;
     }
-    .db-list-item:hover { background: #1d1d22; transform: translateY(-1px); border-color: rgba(255,255,255,0.1); }
-    .db-list-item .list-left { display: flex; align-items: center; gap: 16px; }
-    .db-list-item .list-emoji { font-size: 24px; }
-    .db-list-item .list-title-wrap { display: flex; flex-direction: column; }
-    .db-list-item .list-title { font-size: 14px; font-weight: 500; color: #e4e4e7; }
-    .db-list-item .list-meta { font-size: 12px; color: #a1a1aa; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
-    .db-list-item .list-right { display: flex; align-items: center; gap: 24px; }
-    .db-list-item .list-responses { font-size: 13px; color: #a1a1aa; display: flex; align-items: center; gap: 6px; }
-    .db-list-item .list-responses b { color: white; font-weight: 600; }
+    .db-list-item:hover { 
+      background: #1d1d22; 
+      transform: translateX(4px); 
+      border-color: rgba(255,255,255,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .db-list-item .list-left { display: flex; align-items: center; gap: 20px; }
+    .db-list-item .list-emoji { 
+      font-size: 20px; width: 40px; height: 40px; 
+      display: flex; align-items: center; justify-content: center; 
+      background: rgba(255,255,255,0.03); border-radius: 10px;
+    }
+    .db-list-item .list-title-wrap { display: flex; flex-direction: column; gap: 2px; }
+    .db-list-item .list-title { font-size: 15px; font-weight: 600; color: #f4f4f5; }
+    .db-list-item .list-meta { font-size: 12px; color: #71717a; margin-top: 4px; display: flex; align-items: center; gap: 12px; }
+    .db-list-item .list-right { display: flex; align-items: center; gap: 32px; }
+    .db-list-item .list-responses { font-size: 13px; color: #71717a; display: flex; align-items: center; gap: 6px; }
+    .db-list-item .list-responses b { color: #f4f4f5; font-weight: 700; }
 
     @keyframes dbFadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -3890,12 +3926,33 @@
         <input type="url" id="webhook-url-input" class="auth-input" placeholder="https://sua-api.com/webhook">
       </div>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px">Quando alguém enviar uma resposta, faremos um POST com os dados do formulário para esta URL.</p>
-      <button onclick="saveWebhook()" style="background:var(--accent);color:white;padding:12px 24px;border-radius:var(--radius-md);font-weight:600;cursor:pointer;border:none;font-family:inherit;width:100%">Salvar Webhook</button>
+          <button onclick="saveWebhook()" style="background:var(--accent);color:white;padding:12px 24px;border-radius:var(--radius-md);font-weight:600;cursor:pointer;border:none;font-family:inherit;width:100%">Salvar Webhook</button>
     </div>
   </div>
 
-  <!-- Toast Container -->
-  <div class="toast-container" id="toast-container"></div>
+  <!-- Global Confirmation Modal -->
+  <div id="confirm-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="confirm-modal-title">Confirmar</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-message">Tem certeza?</p>
+        <div id="modal-prompt-area" style="display:none;">
+          <input type="text" id="confirm-modal-input" class="field-input" placeholder="...">
+        </div>
+        <div id="modal-select-area" style="display:none;">
+          <div id="folder-selection-list" class="folder-select-list"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="confirm-modal-cancel" class="modal-btn secondary">Cancelar</button>
+        <button id="confirm-modal-confirm" class="modal-btn primary">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
 
   <script>
 
@@ -4077,6 +4134,80 @@
       closeModal('create-modal');
       renderTemplates('Todos');
       document.getElementById('templates-modal').classList.add('active');
+    }
+
+    // ==================== GLOBAL MODAL SYSTEM ====================
+    let modalPromiseResolve = null;
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirm-modal');
+      modal.classList.remove('active');
+      setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('modal-prompt-area').style.display = 'none';
+        document.getElementById('modal-select-area').style.display = 'none';
+        document.getElementById('confirm-modal-input').value = '';
+      }, 300);
+    }
+
+    function showConfirm(title, message, options = {}) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-modal-title').textContent = title;
+        document.getElementById('confirm-modal-message').textContent = message;
+        
+        const confirmBtn = document.getElementById('confirm-modal-confirm');
+        confirmBtn.className = `modal-btn ${options.danger ? 'danger' : 'primary'}`;
+        confirmBtn.textContent = options.confirmText || 'Confirmar';
+        
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+
+        const onConfirm = () => { cleanup(); resolve(true); };
+        const onCancel = () => { cleanup(); resolve(false); };
+        
+        const cleanup = () => {
+          confirmBtn.removeEventListener('click', onConfirm);
+          document.getElementById('confirm-modal-cancel').removeEventListener('click', onCancel);
+          closeConfirmModal();
+        };
+
+        confirmBtn.addEventListener('click', onConfirm);
+        document.getElementById('confirm-modal-cancel').addEventListener('click', onCancel);
+      });
+    }
+
+    function showPrompt(title, message, placeholder = '') {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-modal-title').textContent = title;
+        document.getElementById('confirm-modal-message').textContent = message;
+        document.getElementById('modal-prompt-area').style.display = 'block';
+        const input = document.getElementById('confirm-modal-input');
+        input.placeholder = placeholder;
+        
+        const confirmBtn = document.getElementById('confirm-modal-confirm');
+        confirmBtn.className = 'modal-btn primary';
+        confirmBtn.textContent = 'Continuar';
+
+        modal.style.display = 'flex';
+        setTimeout(() => { modal.classList.add('active'); input.focus(); }, 10);
+
+        const onConfirm = () => { 
+          const val = input.value.trim();
+          cleanup(); resolve(val || null); 
+        };
+        const onCancel = () => { cleanup(); resolve(null); };
+        
+        const cleanup = () => {
+          confirmBtn.removeEventListener('click', onConfirm);
+          document.getElementById('confirm-modal-cancel').removeEventListener('click', onCancel);
+          closeConfirmModal();
+        };
+
+        confirmBtn.addEventListener('click', onConfirm);
+        document.getElementById('confirm-modal-cancel').addEventListener('click', onCancel);
+      });
     }
 
     // ==================== TOAST ====================
@@ -5958,7 +6089,7 @@
     }
 
     async function createFolder() {
-      const name = prompt('Nome da nova pasta:');
+      const name = await showPrompt('Nova Pasta', 'Digite o nome da sua nova pasta:', 'Ex: Projetos, Marketing...');
       if (!name) return;
       if (!supabaseClient) return showToast('Supabase não configurado!', 'error');
       try {
@@ -5976,7 +6107,8 @@
     }
 
     async function deleteFolder(id) {
-      if (!confirm('Tem certeza que deseja excluir esta pasta? Os formulários não serão excluídos.')) return;
+      const confirmed = await showConfirm('Excluir Pasta', 'Tem certeza que deseja excluir esta pasta? Os formulários dentro dela não serão apagados.', { danger: true, confirmText: 'Excluir' });
+      if (!confirmed) return;
       try {
         const { error } = await supabaseClient.from('folders').delete().eq('id', id);
         if (error) throw error;
@@ -6019,25 +6151,68 @@
     }
 
     async function promptMoveToFolder(formId) {
-      if (state.folders.length === 0) return showToast('Você não tem pastas criadas.', 'info');
+      const modal = document.getElementById('confirm-modal');
+      document.getElementById('confirm-modal-title').textContent = 'Mover para Pasta';
+      document.getElementById('confirm-modal-message').textContent = 'Selecione o destino para este formulário:';
       
-      const folderOptions = state.folders.map(f => `${f.id}: ${f.name}`).join('\n');
-      const input = prompt(`Digite o ID da pasta para mover o formulário:\n\n0: (Raiz - Sem pasta)\n${folderOptions}`);
+      const listArea = document.getElementById('modal-select-area');
+      const listEl = document.getElementById('folder-selection-list');
+      listArea.style.display = 'block';
       
-      if (input === null) return;
-      const folderId = input === '0' ? null : parseInt(input);
+      let selectedFolderId = null;
       
-      try {
-        const { error } = await supabaseClient
-          .from('forms')
-          .update({ folder_id: folderId })
-          .eq('id', formId);
-        
-        if (error) throw error;
-        showToast('Formulário movido com sucesso!', 'success');
-        await loadFormsFromAPI();
-      } catch (err) {
-        showToast('Erro ao mover formulário', 'error');
+      const renderFolderSelection = () => {
+        const rootItem = `
+          <div class="folder-select-item ${selectedFolderId === null ? 'selected' : ''}" onclick="selectDestFolder(null)">
+            <div class="folder-select-icon">📂</div>
+            <div class="folder-select-name">(Raiz - Sem pasta)</div>
+          </div>
+        `;
+        const folderItems = state.folders.map(f => `
+          <div class="folder-select-item ${selectedFolderId === f.id ? 'selected' : ''}" onclick="selectDestFolder(${f.id})">
+            <div class="folder-select-icon">${f.emoji || '📁'}</div>
+            <div class="folder-select-name">${f.name}</div>
+          </div>
+        `).join('');
+        listEl.innerHTML = rootItem + folderItems;
+      };
+
+      window.selectDestFolder = (id) => {
+        selectedFolderId = id;
+        renderFolderSelection();
+      };
+
+      renderFolderSelection();
+      
+      const confirmBtn = document.getElementById('confirm-modal-confirm');
+      confirmBtn.className = 'modal-btn primary';
+      confirmBtn.textContent = 'Mover para cá';
+
+      modal.style.display = 'flex';
+      setTimeout(() => modal.classList.add('active'), 10);
+
+      const result = await new Promise(resolve => {
+        const onConfirm = () => { cleanup(); resolve(true); };
+        const onCancel = () => { cleanup(); resolve(false); };
+        const cleanup = () => {
+          confirmBtn.removeEventListener('click', onConfirm);
+          document.getElementById('confirm-modal-cancel').removeEventListener('click', onCancel);
+          closeConfirmModal();
+          delete window.selectDestFolder;
+        };
+        confirmBtn.addEventListener('click', onConfirm);
+        document.getElementById('confirm-modal-cancel').addEventListener('click', onCancel);
+      });
+
+      if (result) {
+        try {
+          const { error } = await supabaseClient.from('forms').update({ folder_id: selectedFolderId }).eq('id', formId);
+          if (error) throw error;
+          showToast('Formulário movido com sucesso!', 'success');
+          await loadFormsFromAPI();
+        } catch (err) {
+          showToast('Erro ao mover formulário', 'error');
+        }
       }
     }
 
@@ -6104,7 +6279,8 @@
       if (!form) return;
 
       if (form.status === 'trash') {
-        if (!confirm('DESEJA EXCLUIR PERMANENTEMENTE?\nEsta ação apagará todos os dados e respostas para sempre.')) return;
+        const confirmed = await showConfirm('Excluir Permanente', 'DESEJA EXCLUIR PERMANENTEMENTE?\nEsta ação apagará todos os dados e respostas para sempre.', { danger: true, confirmText: 'Excluir para sempre' });
+        if (!confirmed) return;
         try {
           const { error } = await supabaseClient.from('forms').delete().eq('id', formId);
           if (error) throw error;
@@ -6114,7 +6290,8 @@
           showToast('Erro ao apagar: ' + err.message, 'error');
         }
       } else {
-        if (!confirm('Mover para a lixeira?')) return;
+        const confirmed = await showConfirm('Mover para Lixeira', 'Deseja mover este formulário para a lixeira? Você poderá restaurá-lo mais tarde.', { confirmText: 'Mover' });
+        if (!confirmed) return;
         try {
           const { error } = await supabaseClient.from('forms').update({ status: 'trash' }).eq('id', formId);
           if (error) throw error;
@@ -6135,31 +6312,6 @@
         await loadFormsFromAPI();
       } catch (err) {
         showToast('Erro ao restaurar: ' + err.message, 'error');
-      }
-    };
-
-    duplicateForm = async function(formId) {
-      if (!formId) return;
-      try {
-        const { data, error: fetchError } = await supabaseClient.from('forms').select('*').eq('id', formId).single();
-        if (fetchError) throw fetchError;
-
-        const { error: insertError } = await supabaseClient.from('forms').insert({
-          user_id: data.user_id,
-          title: data.title + ' (Cópia)',
-          description: data.description,
-          emoji: data.emoji,
-          fields: data.fields,
-          conditional_rules: data.conditional_rules,
-          theme_color: data.theme_color,
-          status: 'published'
-        });
-        if (insertError) throw insertError;
-        
-        showToast('Formulário duplicado!', 'success');
-        await loadFormsFromAPI();
-      } catch (err) {
-        showToast('Erro ao duplicar: ' + err.message, 'error');
       }
     };
 
@@ -6404,8 +6556,9 @@
     };
 
     deleteAccount = async function() {
-      if (!confirm('Tem certeza que deseja excluir sua conta? Esta ação é irreversível.')) return;
-      showToast('Para excluir a conta, entre em contato com o suporte.', 'info');
+      const confirmed = await showConfirm('Excluir Conta', 'Tem certeza que deseja excluir sua conta? Esta ação é irreversível.', { danger: true, confirmText: 'Excluir minha conta' });
+      if (!confirmed) return;
+      showToast('Para excluir a conta permanentemente, entre em contato com o suporte.', 'info');
     };
 
     // ==================== PLANS (Supabase) ====================

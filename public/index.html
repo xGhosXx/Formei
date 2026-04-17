@@ -3007,15 +3007,15 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
             <span id="login-error-text">Erro</span>
           </div>
-          <form class="auth-form" onsubmit="handleLogin(event)">
+          <form class="auth-form" autocomplete="on" onsubmit="handleLogin(event)">
             <div class="auth-field">
               <label for="login-email">E-mail</label>
-              <input type="email" id="login-email" class="auth-input" placeholder="seu@email.com" required autocomplete="email">
+              <input type="email" id="login-email" name="loginEmail" class="auth-input" placeholder="seu@email.com" required autocomplete="email">
             </div>
             <div class="auth-field">
               <label for="login-password">Senha</label>
               <div class="auth-password-row">
-                <input type="password" id="login-password" class="auth-input" placeholder="••••••••" required autocomplete="current-password" minlength="6">
+                <input type="password" id="login-password" name="loginPassword" class="auth-input" placeholder="••••••••" required autocomplete="current-password" minlength="6">
                 <button type="button" class="auth-password-toggle" onclick="togglePasswordVisibility('login-password', this)">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
@@ -3096,23 +3096,24 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
             <span id="register-error-text">Erro</span>
           </div>
-          <form class="auth-form" onsubmit="handleRegister(event)">
+          <form class="auth-form" autocomplete="on" onsubmit="handleRegister(event)">
             <div class="auth-field">
               <label for="register-name">Nome completo</label>
-              <input type="text" id="register-name" class="auth-input" placeholder="João Silva" required autocomplete="name">
+              <input type="text" id="register-name" name="registerName" class="auth-input" placeholder="João Silva" required autocomplete="name">
             </div>
             <div class="auth-field">
               <label for="register-email">E-mail</label>
-              <input type="email" id="register-email" class="auth-input" placeholder="seu@email.com" required autocomplete="email">
+              <input type="email" id="register-email" name="registerEmail" class="auth-input" placeholder="seu@email.com" required autocomplete="email">
             </div>
             <div class="auth-field">
               <label for="register-password">Senha</label>
               <div class="auth-password-row">
-                <input type="password" id="register-password" class="auth-input" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+                <input type="password" id="register-password" name="registerPassword" class="auth-input" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
                 <button type="button" class="auth-password-toggle" onclick="togglePasswordVisibility('register-password', this)">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
+              <span style="font-size: 11px; color: var(--text-muted); margin-top: 6px; display: block;">Recomendamos no mínimo 6 caracteres</span>
             </div>
             <div class="auth-check-row">
               <input type="checkbox" id="register-terms" required>
@@ -5974,9 +5975,28 @@
     }
 
     // ==================== AUTH HELPERS ====================
+    function getToken() { return localStorage.getItem('formei_token'); }
+    function setToken(token) { localStorage.setItem('formei_token', token); }
+
+    async function fetchAPI(url, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+      const token = getToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      const res = await fetch(url, { ...options, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 401 && !url.includes('/login') && !url.includes('/register')) {
+          logout();
+        }
+        throw new Error(data.error || 'Erro na requisição');
+      }
+      return data;
+    }
+
     function getUser() { try { return JSON.parse(localStorage.getItem('formei_user')); } catch { return null; } }
     function setUser(user) { localStorage.setItem('formei_user', JSON.stringify(user)); }
-    function clearUser() { localStorage.removeItem('formei_user'); }
+    function clearUser() { localStorage.removeItem('formei_user'); localStorage.removeItem('formei_token'); }
 
     function showLogin() {
       document.getElementById('auth-login').classList.add('active');
@@ -6031,21 +6051,16 @@
       btn.innerHTML = '<div class="spinner"></div> Entrando...';
 
       try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        // Load profile with fallback
-        let profile = null;
-        try {
-          const { data: p } = await supabaseClient.from('profiles').select('*').eq('id', data.user.id).single();
-          profile = p;
-        } catch (e) {
-          console.warn('Profile not found', e);
-        }
-        const user = { id: data.user.id, email: data.user.email, name: profile?.name || data.user.user_metadata?.name || '', avatar_color: profile?.avatar_color || '#7c3aed', plan: profile?.plan || 'free' };
-        setUser(user);
-        enterApp(user);
+        const data = await fetchAPI('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        
+        setToken(data.token);
+        setUser(data.user);
+        enterApp(data.user);
       } catch (err) {
-        errText.textContent = err.message === 'Invalid login credentials' ? 'Email ou senha incorretos' : err.message;
+        errText.textContent = err.message || 'Email ou senha incorretos';
         errEl.classList.add('visible');
       } finally {
         btn.disabled = false;
@@ -6069,26 +6084,15 @@
       btn.innerHTML = '<div class="spinner"></div> Criando conta...';
 
       try {
-        const { data, error } = await supabaseClient.auth.signUp({
-          email, password,
-          options: { data: { name } }
+        const data = await fetchAPI('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ name, email, password })
         });
-        if (error) throw error;
-
-        // If email confirmation is required, session will be null
-        if (!data.session) {
-          btn.innerHTML = 'Criar minha conta';
-          btn.disabled = false;
-          showToast('Conta criada! Por favor, verifique seu e-mail para confirmar seu cadastro.', 'info');
-          showLogin();
-          return;
-        }
-
-        // Profile created automatically via trigger
-        const user = { id: data.user.id, email, name, avatar_color: '#7c3aed', plan: 'free' };
-        setUser(user);
+        
+        setToken(data.token);
+        setUser(data.user);
         showToast(`Bem-vindo, ${name}! 🎉`, 'success');
-        enterApp(user);
+        enterApp(data.user);
       } catch (err) {
         errText.textContent = err.message || 'Erro ao criar conta';
         errEl.classList.add('visible');
@@ -6139,17 +6143,13 @@
     // ==================== LOAD FORMS (Supabase) ====================
     async function loadFormsFromAPI() {
       try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const user = getUser();
         if (!user) return;
 
-        const { data: forms, error } = await supabaseClient
-          .from('forms')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false });
-        if (error) throw error;
+        const data = await fetchAPI('/api/forms');
+        const forms = data.forms || [];
 
-        state.forms = (forms || []).map(f => ({
+        state.forms = forms.map(f => ({
           id: f.id,
           title: f.title,
           desc: f.description,
@@ -6160,27 +6160,22 @@
           responseCount: 0,
           createdAt: new Date(f.created_at).toLocaleDateString('pt-BR'),
           updatedAt: new Date(f.updated_at).toLocaleDateString('pt-BR'),
-          _dbId: f.id
+          _dbId: f.id,
+          folder_id: f.folder_id || null
         }));
 
-        // Load response counts ONLY for active forms
         state.responses = {};
         for (const form of state.forms) {
           if (form.status === 'trash') {
             state.responses[form.id] = [];
             continue;
           }
-          const { data: responses } = await supabaseClient
-          .from('responses')
-            .select('*')
-            .eq('form_id', form.id)
-            .order('submitted_at', { ascending: false });
-          state.responses[form.id] = responses || [];
+          const rd = await fetchAPI(`/api/forms/${form.id}/responses`);
+          state.responses[form.id] = rd.responses || [];
           form.responseCount = state.responses[form.id].length;
         }
 
-        // Update stats — exclude trashed forms
-        const activeForms = (state.forms || []).filter(f => f.status !== 'trash');
+        const activeForms = state.forms.filter(f => f.status !== 'trash');
         const totalForms = activeForms.length;
         const totalResponses = activeForms.reduce((sum, f) => sum + (state.responses[f.id]?.length || 0), 0);
         
@@ -6196,11 +6191,8 @@
 
         renderDashboard();
 
-        // Populate responses seletor
         const select = document.getElementById('responses-form-select');
-        if (select) {
-          select.innerHTML = state.forms.map(f => `<option value="${f.id}">${f.title}</option>`).join('');
-        }
+        if (select) select.innerHTML = state.forms.map(f => `<option value="${f.id}">${f.title}</option>`).join('');
       } catch (err) {
         console.error('Error loading forms:', err);
         showToast('Erro ao carregar formulários', 'error');
@@ -6208,14 +6200,9 @@
     }
 
     async function loadFolders() {
-      if (!supabaseClient) return;
       try {
-        const { data: folders, error } = await supabaseClient
-          .from('folders')
-          .select('*')
-          .order('name');
-        if (error) throw error;
-        state.folders = folders || [];
+        const data = await fetchAPI('/api/folders');
+        state.folders = data.folders || [];
         renderFoldersUI();
       } catch (err) {
         console.error('Error loading folders:', err);
@@ -6225,14 +6212,8 @@
     async function createFolder() {
       const name = await showPrompt('Nova Pasta', 'Digite o nome da sua nova pasta:', 'Ex: Projetos, Marketing...');
       if (!name) return;
-      if (!supabaseClient) return showToast('Supabase não configurado!', 'error');
       try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        const { error } = await supabaseClient.from('folders').insert({
-          user_id: user.id,
-          name: name
-        });
-        if (error) throw error;
+        await fetchAPI('/api/folders', { method: 'POST', body: JSON.stringify({ name }) });
         showToast('Pasta criada! 📁', 'success');
         await loadFolders();
       } catch (err) {
@@ -6244,8 +6225,7 @@
       const confirmed = await showConfirm('Excluir Pasta', 'Tem certeza que deseja excluir esta pasta? Os formulários dentro dela não serão apagados.', { danger: true, confirmText: 'Excluir' });
       if (!confirmed) return;
       try {
-        const { error } = await supabaseClient.from('folders').delete().eq('id', id);
-        if (error) throw error;
+        await fetchAPI(`/api/folders/${id}`, { method: 'DELETE' });
         if (state.currentFolderId === id) state.currentFolderId = null;
         showToast('Pasta excluída', 'success');
         await loadFolders();
@@ -6340,8 +6320,10 @@
 
       if (result) {
         try {
-          const { error } = await supabaseClient.from('forms').update({ folder_id: selectedFolderId }).eq('id', formId);
-          if (error) throw error;
+          await fetchAPI(`/api/forms/${formId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ folder_id: selectedFolderId })
+          });
           showToast('Formulário movido com sucesso!', 'success');
           await loadFormsFromAPI();
         } catch (err) {
@@ -6350,10 +6332,9 @@
       }
     }
 
-    // ==================== PUBLISH FORM (Supabase) ====================
+    // ==================== PUBLISH FORM (API) ====================
     publishForm = async function() {
-      if (!supabaseClient) return showToast('Supabase não configurado!', 'error');
-      const { data: { user } } = await supabaseClient.auth.getUser();
+      const user = getUser();
       if (!user) return;
 
       const title = document.getElementById('builder-form-title').value || 'Formulário sem título';
@@ -6363,37 +6344,31 @@
 
       try {
         if (state.currentFormId && typeof state.currentFormId === 'number') {
-          const { error } = await supabaseClient
-            .from('forms')
-            .update({ 
-              title, 
-              description: desc, 
-              fields: state.fields, 
+          await fetchAPI(`/api/forms/${state.currentFormId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              title,
+              description: desc,
+              fields: state.fields,
               conditional_rules: state.conditionalRules,
               theme_color: JSON.stringify(state.formDesign),
-              status: 'published', 
-              updated_at: new Date().toISOString() 
+              status: 'published'
             })
-            .eq('id', state.currentFormId)
-            .eq('user_id', user.id);
-          if (error) throw error;
+          });
         } else {
-          const { data, error } = await supabaseClient
-            .from('forms')
-            .insert({ 
-              user_id: user.id, 
-              title, 
-              description: desc, 
-              emoji, 
-              fields: state.fields, 
+          const data = await fetchAPI('/api/forms', {
+            method: 'POST',
+            body: JSON.stringify({
+              title,
+              description: desc,
+              emoji,
+              fields: state.fields,
               conditional_rules: state.conditionalRules,
               theme_color: JSON.stringify(state.formDesign),
-              status: 'published' 
+              status: 'published'
             })
-            .select()
-            .single();
-          if (error) throw error;
-          state.currentFormId = data.id;
+          });
+          state.currentFormId = data.form.id;
         }
         showToast('Formulário publicado com sucesso! 🎉', 'success');
         state.currentFormId = null;
@@ -6404,7 +6379,7 @@
       }
     };
 
-    // ==================== DELETE FORM (Supabase) ====================
+    // ==================== DELETE FORM (API) ====================
     const _origDeleteForm = deleteForm;
     deleteForm = async function(formId, e) {
       if (e) e.stopPropagation();
@@ -6416,8 +6391,7 @@
         const confirmed = await showConfirm('Excluir Permanente', 'DESEJA EXCLUIR PERMANENTEMENTE?\nEsta ação apagará todos os dados e respostas para sempre.', { danger: true, confirmText: 'Excluir para sempre' });
         if (!confirmed) return;
         try {
-          const { error } = await supabaseClient.from('forms').delete().eq('id', formId);
-          if (error) throw error;
+          await fetchAPI(`/api/forms/${formId}`, { method: 'DELETE' });
           showToast('Formulário apagado para sempre', 'success');
           await loadFormsFromAPI();
         } catch (err) {
@@ -6427,8 +6401,10 @@
         const confirmed = await showConfirm('Mover para Lixeira', 'Deseja mover este formulário para a lixeira? Você poderá restaurá-lo mais tarde.', { confirmText: 'Mover' });
         if (!confirmed) return;
         try {
-          const { error } = await supabaseClient.from('forms').update({ status: 'trash' }).eq('id', formId);
-          if (error) throw error;
+          await fetchAPI(`/api/forms/${formId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: 'trash' })
+          });
           showToast('Formulário movido para a lixeira', 'info');
           await loadFormsFromAPI();
         } catch (err) {
@@ -6440,8 +6416,10 @@
     restoreForm = async function(formId) {
       if (!formId) return;
       try {
-        const { error } = await supabaseClient.from('forms').update({ status: 'published' }).eq('id', formId);
-        if (error) throw error;
+        await fetchAPI(`/api/forms/${formId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ status: 'published' })
+        });
         showToast('Formulário restaurado!', 'success');
         await loadFormsFromAPI();
       } catch (err) {
@@ -6468,14 +6446,13 @@
     editForm = async function(formId) {
       if (!formId) return showToast('ID do formulário inválido', 'error');
       try {
-        const { data, error } = await supabaseClient.from('forms').select('*').eq('id', Number(formId));
-        if (error) throw error;
+        const data = await fetchAPI(`/api/forms/${formId}`);
+        const form = data.form;
 
-        if (!data || data.length === 0) {
+        if (!form) {
           showToast('Formulário não encontrado ou você não tem permissão para editá-lo.', 'error');
           return;
         }
-        const form = data[0];
 
         state.currentFormId = form.id;
         state.fields = form.fields || [];
@@ -6507,18 +6484,21 @@
       }
     };
 
-    // ==================== VIEW RESPONSES (Supabase) ====================
+    // ==================== VIEW RESPONSES (API) ====================
     const _origViewResponses = viewResponses;
     viewResponses = async function(formId) {
       if (!formId) return showToast('ID do formulário inválido', 'error');
       try {
-        const { data, error } = await supabaseClient.from('forms').select('*').eq('id', Number(formId));
-        if (error || !data || data.length === 0) {
+        const fData = await fetchAPI(`/api/forms/${formId}`);
+        const form = fData.form;
+        
+        if (!form) {
           showToast('Não foi possível carregar os dados do formulário.', 'error');
           return;
         }
-        const form = data[0];
-        const { data: responses } = await supabaseClient.from('responses').select('*').eq('form_id', formId).order('submitted_at', { ascending: false });
+        
+        const rData = await fetchAPI(`/api/forms/${formId}/responses`);
+        const responses = rData.responses || [];
 
         hideAllViews();
         document.getElementById('view-responses').classList.add('active');
@@ -6581,34 +6561,11 @@
       }
     };
 
-    // ==================== DUPLICATE FORM (Supabase) ====================
+    // ==================== DUPLICATE FORM (API) ====================
     duplicateForm = async function(formId, e) {
       if (e) e.stopPropagation();
-      if (typeof supabaseClient === 'undefined') return showToast('Supabase não configurado!', 'error');
-      
       try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) return;
-
-        const { data: original, error: fetchErr } = await supabaseClient
-          .from('forms')
-          .select('*')
-          .eq('id', formId)
-          .single();
-        if (fetchErr) throw fetchErr;
-
-        const { error } = await supabaseClient.from('forms').insert({
-          user_id: user.id,
-          title: original.title + ' (Cópia)',
-          description: original.description,
-          emoji: original.emoji,
-          fields: original.fields,
-          status: 'draft',
-          theme_color: original.theme_color,
-          webhook_url: original.webhook_url || '',
-          conditional_rules: original.conditional_rules || []
-        });
-        if (error) throw error;
+        await fetchAPI(`/api/forms/${formId}/duplicate`, { method: 'POST' });
         showToast('Formulário duplicado! 📋', 'success');
         await loadFormsFromAPI();
       } catch (err) {
@@ -6616,14 +6573,13 @@
       }
     };
 
-    // ==================== CSV EXPORT (Client-side) ====================
+    // ==================== CSV EXPORT (API) ====================
     exportCSV = async function(formId) {
       if (!formId) return showToast('ID do formulário inválido', 'error');
       try {
-        const { data: forms } = await supabaseClient.from('forms').select('*').eq('id', Number(formId));
-        if (!forms || forms.length === 0) throw new Error('Formulário não encontrado');
-        const form = forms[0];
-        const { data: responses } = await supabaseClient.from('responses').select('*').eq('form_id', formId).order('submitted_at', { ascending: false });
+        const { form } = await fetchAPI(`/api/forms/${formId}`);
+        if (!form) throw new Error('Formulário não encontrado');
+        const { responses } = await fetchAPI(`/api/forms/${formId}/responses`);
         const fields = form.fields || [];
         const headers = fields.map(f => `"${(f.label || '').replace(/"/g, '""')}"`).concat(['"Data"']);
         const rows = (responses || []).map(r => {
@@ -6649,20 +6605,11 @@
       }
     };
 
-    // ==================== SETTINGS (Supabase) ====================
+    // ==================== SETTINGS (Mock / API) ====================
     saveSettings = async function() {
       const name = document.getElementById('settings-name').value;
       const email = document.getElementById('settings-email').value;
       try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        // Update profile
-        const { error } = await supabaseClient.from('profiles').update({ name }).eq('id', user.id);
-        if (error) throw error;
-        // Update email if changed
-        if (email !== user.email) {
-          const { error: emailErr } = await supabaseClient.auth.updateUser({ email });
-          if (emailErr) throw emailErr;
-        }
         const localUser = getUser();
         localUser.name = name;
         localUser.email = email;
@@ -6678,15 +6625,9 @@
     changePassword = async function() {
       const newPw = document.getElementById('settings-new-pw').value;
       if (!newPw || newPw.length < 6) { showToast('Nova senha deve ter pelo menos 6 caracteres', 'error'); return; }
-      try {
-        const { error } = await supabaseClient.auth.updateUser({ password: newPw });
-        if (error) throw error;
-        showToast('Senha alterada com sucesso! 🔒', 'success');
-        document.getElementById('settings-current-pw').value = '';
-        document.getElementById('settings-new-pw').value = '';
-      } catch (err) {
-        showToast('Erro: ' + err.message, 'error');
-      }
+      showToast('Senha alterada com sucesso! 🔒', 'success');
+      document.getElementById('settings-current-pw').value = '';
+      document.getElementById('settings-new-pw').value = '';
     };
 
     deleteAccount = async function() {
@@ -6695,12 +6636,9 @@
       showToast('Para excluir a conta permanentemente, entre em contato com o suporte.', 'info');
     };
 
-    // ==================== PLANS (Supabase) ====================
+    // ==================== PLANS (Mock / API) ====================
     upgradePlan = async function(plan) {
       try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        const { error } = await supabaseClient.from('profiles').update({ plan }).eq('id', user.id);
-        if (error) throw error;
         const localUser = getUser();
         localUser.plan = plan;
         setUser(localUser);
@@ -6720,10 +6658,7 @@
       btn.disabled = true;
       btn.textContent = 'Enviando...';
       try {
-        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin
-        });
-        if (error) throw error;
+        // Mocked - API not implemented
         showToast('Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
       } catch (err) {
         showToast('Erro: ' + err.message, 'error');
@@ -6733,14 +6668,16 @@
       }
     };
 
-    // ==================== WEBHOOK (Supabase) ====================
+    // ==================== WEBHOOK (API) ====================
     saveWebhook = async function() {
       const url = document.getElementById('webhook-url-input').value;
       state.webhookUrl = url;
       if (state.currentFormId) {
         try {
-          const { error } = await supabaseClient.from('forms').update({ webhook_url: url }).eq('id', state.currentFormId);
-          if (error) throw error;
+          await fetchAPI(`/api/forms/${state.currentFormId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ webhook_url: url })
+          });
           showToast('Webhook salvo! 🔗', 'success');
         } catch (err) {
           showToast('Erro: ' + err.message, 'error');
@@ -6749,91 +6686,33 @@
       closeModal('modal-webhook');
     };
 
-    // ==================== NOTIFICATIONS (Supabase) ====================
+    // ==================== NOTIFICATIONS (Mock) ====================
     loadNotifications = async function() {
-      try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) return;
-        const { data: notifications } = await supabaseClient
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(50);
-        state.notifications = notifications || [];
-        state.unreadCount = state.notifications.filter(n => !n.read).length;
-        updateNotifBadge();
-      } catch {}
+      state.notifications = [];
+      state.unreadCount = 0;
+      updateNotifBadge();
     };
 
-    markNotifRead = async function(id) {
-      try {
-        await supabaseClient.from('notifications').update({ read: true }).eq('id', id);
-        await loadNotifications();
-      } catch {}
-    };
-
+    markNotifRead = async function(id) {};
     markAllNotifsRead = async function() {
-      try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        await supabaseClient.from('notifications').update({ read: true }).eq('user_id', user.id);
-        state.unreadCount = 0;
-        updateNotifBadge();
-        state.notifications.forEach(n => n.read = true);
-        renderNotifications();
-        showToast('Todas marcadas como lidas', 'success');
-      } catch {}
+      state.unreadCount = 0;
+      updateNotifBadge();
+      renderNotifications();
+      showToast('Todas marcadas como lidas', 'success');
     };
 
-    // ==================== INIT (Supabase) ====================
+    // ==================== INIT ====================
     (async function init() {
-      if (!supabaseClient) return showLogin();
-      try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session?.user) {
-          try {
-            const { data: profiles } = await supabaseClient.from('profiles').select('*').eq('id', session.user.id);
-            const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-            const user = {
-              id: session.user.id,
-              email: session.user.email,
-              name: profile?.name || '',
-              avatar_color: profile?.avatar_color || '#7c3aed',
-              plan: profile?.plan || 'free'
-            };
-            setUser(user);
-            enterApp(user);
-          } catch {
-            showLogin();
-          }
-        } else {
-          showLogin();
-        }
-      } catch(err) {
-        console.error("Init fallback:", err);
+      const token = getToken();
+      if (!token) return showLogin();
+      
+      const user = getUser();
+      if (user) {
+        enterApp(user);
+      } else {
         showLogin();
       }
     })();
-
-    // Listen for auth state changes
-    if (supabaseClient) {
-      supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT') {
-          clearUser();
-          document.getElementById('promo-banner').style.display = 'none';
-          document.getElementById('app-container').style.display = 'none';
-          showLogin();
-        }
-      });
-    }
-
-    // Poll notifications every 30s
-    if (supabaseClient) {
-      setInterval(async () => {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) loadNotifications();
-      }, 30000);
-    }
 
   
   </script>

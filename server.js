@@ -90,13 +90,14 @@ function loadDB() {
     }
     
     if (!fs.existsSync(DB_PATH)) {
-      const initial = { users: [], forms: [], responses: [], notifications: [], resetTokens: [], nextId: 1 };
+      const initial = { users: [], forms: [], responses: [], notifications: [], resetTokens: [], folders: [], nextId: 1 };
       if (!isVercel) fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
       return initial;
     }
     const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
     if (!db.notifications) db.notifications = [];
     if (!db.resetTokens) db.resetTokens = [];
+    if (!db.folders) db.folders = [];
     return db;
   } catch (err) {
     return { users: [], forms: [], responses: [], notifications: [], resetTokens: [], nextId: 1 };
@@ -432,7 +433,7 @@ app.get('/api/forms/:id', authMiddleware, async (req, res) => {
 
 // Create form
 app.post('/api/forms', authMiddleware, async (req, res) => {
-  const { title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules } = req.body;
+  const { title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules, folder_id } = req.body;
 
   if (!supabase) {
     const db = loadDB();
@@ -441,6 +442,7 @@ app.post('/api/forms', authMiddleware, async (req, res) => {
       description: description || '', emoji: emoji || '📋', fields: fields || [],
       status: status || 'draft', theme_color: theme_color || '#7c3aed',
       webhook_url: webhook_url || '', conditional_rules: conditional_rules || [],
+      folder_id: folder_id || null,
       views: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString()
     };
     db.forms.push(form);
@@ -461,6 +463,7 @@ app.post('/api/forms', authMiddleware, async (req, res) => {
       theme_color: theme_color || '#7c3aed',
       webhook_url: webhook_url || '',
       conditional_rules: conditional_rules || [],
+      folder_id: folder_id || null,
       views: 0
     }])
     .select()
@@ -475,7 +478,7 @@ app.post('/api/forms', authMiddleware, async (req, res) => {
 // Update form
 app.put('/api/forms/:id', authMiddleware, async (req, res) => {
   const id = req.params.id;
-  const { title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules } = req.body;
+  const { title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules, folder_id } = req.body;
 
   if (!supabase) {
     const db = loadDB();
@@ -489,6 +492,7 @@ app.put('/api/forms/:id', authMiddleware, async (req, res) => {
     if (theme_color !== undefined) form.theme_color = theme_color;
     if (webhook_url !== undefined) form.webhook_url = webhook_url;
     if (conditional_rules !== undefined) form.conditional_rules = conditional_rules;
+    if (folder_id !== undefined) form.folder_id = folder_id;
     form.updated_at = new Date().toISOString();
     saveDB(db);
     form.response_count = db.responses.filter(r => r.form_id === form.id).length;
@@ -498,7 +502,7 @@ app.put('/api/forms/:id', authMiddleware, async (req, res) => {
   const { data: form, error } = await supabase
     .from('forms')
     .update({
-      title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules,
+      title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules, folder_id,
       updated_at: new Date().toISOString()
     })
     .eq('id', id)
@@ -572,6 +576,46 @@ app.delete('/api/forms/:id', authMiddleware, async (req, res) => {
     .eq('id', id)
     .eq('user_id', req.userId);
 
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+// ==================== FOLDERS ROUTES ====================
+app.get('/api/folders', authMiddleware, async (req, res) => {
+  if (!supabase) {
+    const db = loadDB();
+    const folders = db.folders.filter(f => f.user_id === req.userId);
+    return res.json({ folders });
+  }
+  const { data: folders, error } = await supabase.from('folders').select('*').eq('user_id', req.userId).order('name');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ folders });
+});
+
+app.post('/api/folders', authMiddleware, async (req, res) => {
+  const { name } = req.body;
+  if (!supabase) {
+    const db = loadDB();
+    const folder = { id: genId(db), user_id: req.userId, name, created_at: new Date().toISOString() };
+    if(!db.folders) db.folders = [];
+    db.folders.push(folder);
+    saveDB(db);
+    return res.status(201).json({ folder });
+  }
+  const { data, error } = await supabase.from('folders').insert([{ user_id: req.userId, name }]).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json({ folder: data });
+});
+
+app.delete('/api/folders/:id', authMiddleware, async (req, res) => {
+  const id = req.params.id;
+  if (!supabase) {
+    const db = loadDB();
+    db.folders = db.folders.filter(f => f.id !== parseInt(id));
+    saveDB(db);
+    return res.json({ success: true });
+  }
+  const { error } = await supabase.from('folders').delete().eq('id', id).eq('user_id', req.userId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });

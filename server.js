@@ -17,9 +17,15 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'formei_secret_key_2024_ultraSeguro';
 
 // Supabase initialization
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rjjsjxzoyxerztxxovjp.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_LtLhUq0cZNG-N49NXpUj2g_Lw9dPQo-';
+const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+}) : null;
 const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION;
 
 if (!supabase) {
@@ -214,7 +220,10 @@ app.post('/api/auth/login', async (req, res) => {
 
     // Supabase Auth Login
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    if (authError) return res.status(401).json({ error: 'Email ou senha incorretos' });
+    if (authError) {
+      console.error("Supabase Auth Error:", authError);
+      return res.status(401).json({ error: authError.message || 'Email ou senha incorretos' });
+    }
 
     const { data: profile } = await supabase
       .from('profiles')

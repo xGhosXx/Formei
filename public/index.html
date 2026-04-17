@@ -2786,7 +2786,20 @@
     .db-nav-left svg { color: inherit; }
     .db-nav-item:hover { background: rgba(255,255,255,0.05); color: #e4e4e7; }
     .db-nav-item.active { background: rgba(255,255,255,0.08); color: white; }
-    .db-nav-badge { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .db-nav-badge { 
+      font-size: 11px; 
+      color: rgba(255,255,255,0.5); 
+      background: rgba(255,255,255,0.05);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .db-nav-item:hover .db-nav-badge {
+      background: var(--accent);
+      color: white;
+      transform: scale(1.1);
+    }
     
     /* MAIN AREA */
     .db-main-area { flex: 1; display: flex; flex-direction: column; padding: 32px 48px; overflow-y: auto; }
@@ -5877,7 +5890,7 @@
 
       // Update stats based on active (non-trash) forms
       const activeForms = state.forms.filter(f => f.status !== 'trash');
-      const totalResponses = Object.values(state.responses).reduce((sum, r) => sum + r.length, 0);
+      const totalResponses = activeForms.reduce((sum, f) => sum + (f.responseCount || 0), 0);
       const totalViews = activeForms.reduce((sum, f) => sum + (f.views || 0), 0);
       const avgRate = totalViews > 0 ? Math.round((totalResponses / totalViews) * 100) : 0;
       
@@ -6235,28 +6248,17 @@
           fields: f.fields || [],
           status: f.status,
           views: f.views || 0,
-          responseCount: 0,
+          responseCount: f.response_count || 0,
           createdAt: new Date(f.created_at).toLocaleDateString('pt-BR'),
           updatedAt: new Date(f.updated_at).toLocaleDateString('pt-BR'),
           _dbId: f.id,
           folder_id: f.folder_id || null
         }));
 
-        state.responses = {};
-        for (const form of state.forms) {
-          if (form.status === 'trash') {
-            state.responses[form.id] = [];
-            continue;
-          }
-          const rd = await fetchAPI(`/api/forms/${form.id}/responses`);
-          state.responses[form.id] = rd.responses || [];
-          form.responseCount = state.responses[form.id].length;
-        }
-
         const activeForms = state.forms.filter(f => f.status !== 'trash');
         const trashedForms = state.forms.filter(f => f.status === 'trash');
         const totalForms = activeForms.length;
-        const totalResponses = activeForms.reduce((sum, f) => sum + (state.responses[f.id]?.length || 0), 0);
+        const totalResponses = activeForms.reduce((sum, f) => sum + (f.responseCount || 0), 0);
         
         const sf = document.getElementById('stat-forms');
         if (sf) sf.textContent = totalForms;
@@ -6277,7 +6279,10 @@
         renderDashboard();
 
         const select = document.getElementById('responses-form-select');
-        if (select) select.innerHTML = state.forms.map(f => `<option value="${f.id}">${f.title}</option>`).join('');
+        if (select) {
+          const activeForms = state.forms.filter(f => f.status !== 'trash');
+          select.innerHTML = activeForms.map(f => `<option value="${f.id}">${f.title}</option>`).join('');
+        }
       } catch (err) {
         console.error('Error loading forms:', err);
         showToast('Erro ao carregar formulários', 'error');
@@ -6462,8 +6467,8 @@
         }
         showToast('Formulário salvo com sucesso! 🎉', 'success');
         state.currentFormId = null;
-        await loadFormsFromAPI();
         goToDashboard();
+        loadFormsFromAPI(); // Refresh list in background
       } catch (err) {
         showToast('Erro ao salvar: ' + err.message, 'error');
       } finally {

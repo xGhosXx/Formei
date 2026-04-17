@@ -838,6 +838,23 @@
 
       document.getElementById('form-container').style.display = 'none';
       document.getElementById('success-screen').classList.add('active');
+
+      // Check for redirect URL in design settings
+      let design = null;
+      try {
+        if (formData.theme_color && formData.theme_color.startsWith('{')) {
+          design = JSON.parse(formData.theme_color);
+        }
+      } catch(e) {}
+
+      if (design && design.redirectUrl) {
+        let url = design.redirectUrl.trim();
+        if (url.startsWith('www.')) url = 'https://' + url;
+        
+        setTimeout(() => {
+          window.location.href = url;
+        }, 2000);
+      }
     } catch (err) {
       alert('Erro ao enviar resposta: ' + err.message);
       btn.disabled = false;

@@ -3672,6 +3672,10 @@
               <label class="design-label">URL do Logo</label>
               <input type="text" class="setting-input" placeholder="https://..." value="" oninput="updateDesign('logo', this.value)" id="dsg-logo">
             </div>
+            <div class="design-row">
+              <label class="design-label">URL de Redirecionamento (Pós-envio)</label>
+              <input type="text" class="setting-input" placeholder="https://exemplo.com/obrigado" value="" oninput="updateDesign('redirectUrl', this.value)" id="dsg-redirectUrl">
+            </div>
             <div class="design-row" style="padding-top:8px">
               <button class="btn-add-option" onclick="resetDesign()" style="color:var(--red); font-size:12px;">↺ Restaurar padrão</button>
             </div>
@@ -4724,7 +4728,12 @@
         const hex = document.getElementById('dsg-' + key);
         if (hex) hex.textContent = d[key];
       });
-      // Sync selects
+      document.getElementById('dsg-bgGradient').value = d.bgGradient || '';
+      document.getElementById('dsg-coverImage').value = d.coverImage || '';
+      document.getElementById('dsg-logo').value = d.logo || '';
+      document.getElementById('dsg-redirectUrl').value = d.redirectUrl || '';
+      
+      applyDesignToCanvas();
       const fontSel = document.getElementById('dsg-fontFamily');
       if (fontSel) fontSel.value = d.fontFamily;
       const bgGrad = document.getElementById('dsg-bgGradient');
@@ -4774,7 +4783,8 @@
         inputBorder: '#2a2a3a', fontFamily: 'Inter', fontSize: '15',
         borderRadius: '12', buttonStyle: 'filled', buttonRadius: '10',
         coverImage: '', logo: '', fieldSpacing: '16', cardPadding: '40',
-        cardBorder: true, cardShadow: true, bgGradient: '', inputStyle: 'outlined'
+        cardBorder: true, cardShadow: true, bgGradient: '', inputStyle: 'outlined',
+        redirectUrl: ''
       };
       syncDesignPanel();
       applyDesignToCanvas();

@@ -2661,6 +2661,31 @@
       accent-color: var(--accent);
     }
 
+    .mobile-fab { display: none; }
+    
+    .canvas-floating-toolbar {
+      position: absolute;
+      top: -46px;
+      right: 0;
+      display: flex;
+      gap: 6px;
+      background: #18181c;
+      padding: 6px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 20;
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: dbFadeInUp 0.15s ease backwards;
+    }
+    .canvas-floating-toolbar button {
+      background: transparent; border: none; color: #a1a1aa; cursor: pointer; padding: 6px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; transition: 0.2s;
+    }
+    .canvas-floating-toolbar button:hover { background: rgba(255,255,255,0.08); color: white; }
+    
+    .field-item.dragging { opacity: 0.4; }
+    .field-item.drag-over { border-top: 2px solid var(--accent) !important; }
+
     @media (max-width: 960px) {
       .auth-hero { display: none; }
       .auth-form-side { width: 100%; min-width: auto; }
@@ -2876,6 +2901,7 @@
       .desktop-text { display: none !important; }
       .mobile-text { display: inline !important; }
       .mobile-hide { display: none !important; }
+      .canvas-floating-toolbar { display: none !important; }
 
       .btn-primary-sm { padding: 8px 16px; background: #3b3b4f; color: white; border: 1px solid var(--border-color); border-radius: 20px;}
       .btn-primary-sm:hover { background: var(--bg-surface-2); }
@@ -3817,7 +3843,7 @@
           <div class="canvas-frame">
             <div class="canvas-paper" onclick="event.stopPropagation()">
               <div class="canvas-form-header">
-                <input type="text" class="canvas-form-title" id="canvas-form-title" value="Formulário sem título" placeholder="Título do formulário" style="height:auto;">
+                <input type="text" class="canvas-form-title" id="canvas-form-title" value="Formulário sem título" placeholder="Título do formulário">
                 <textarea class="canvas-form-desc" id="canvas-form-desc" rows="2" placeholder="Adicione uma descrição..."></textarea>
               </div>
               <div class="canvas-fields" id="canvas-fields">
@@ -3829,7 +3855,7 @@
             </div>
           </div>
           
-          <div class="mobile-fab" onclick="toggleMobileFields()" style="display:none;" id="mobile-add-btn">
+          <div class="mobile-fab" onclick="toggleMobileFields()" id="mobile-add-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </div>
         </div>
@@ -5254,6 +5280,15 @@
         const item = document.createElement('div');
         item.className = `field-item ${field.id === state.selectedFieldId ? 'selected' : ''}`;
         item.style.animationDelay = `${idx * 0.05}s`;
+        
+        // Drag and drop bindings
+        item.draggable = true;
+        item.ondragstart = (e) => handleDragStart(e, field.id);
+        item.ondragover = handleDragOver;
+        item.ondragleave = handleDragLeave;
+        item.ondrop = (e) => handleDrop(e, field.id);
+        item.ondragend = handleDragEnd;
+
         item.onclick = (e) => { e.stopPropagation(); selectField(field.id); };
 
         const reqSpan = field.required ? '<span class="required-dot">*</span>' : '';
@@ -5295,10 +5330,25 @@
             mockHtml = `<div class="field-mock-input" style="color:var(--text-muted); font-style:italic;">Tipo de campo: ${field.type}</div>`;
         }
 
+        let floatingToolbar = '';
+        if (field.id === state.selectedFieldId) {
+          floatingToolbar = `
+            <div class="canvas-floating-toolbar" onclick="event.stopPropagation()">
+              <button onclick="duplicateSelectedField()" title="Duplicar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+              <button onclick="deleteSelectedField()" title="Excluir" style="color:var(--red);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          `;
+        }
+
         item.innerHTML = `
+          ${floatingToolbar}
           <div class="field-item-header">
             <span class="field-item-label">${field.label}${reqSpan}</span>
-            <div class="field-item-drag" title="Arrastar">
+            <div class="field-item-drag" title="Arrastar (Segure aqui)" style="cursor: grab;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
             </div>
           </div>

@@ -4149,6 +4149,7 @@
     // ==================== STATE ====================
     const state = {
       forms: [],
+      isLoadingForms: false,
       currentFormId: null,
       fields: [],
       selectedFieldId: null,
@@ -6233,6 +6234,8 @@
 
     // ==================== LOAD FORMS (Supabase) ====================
     async function loadFormsFromAPI() {
+      if (state.isLoadingForms) return;
+      state.isLoadingForms = true;
       try {
         const user = getUser();
         if (!user) return;
@@ -6286,6 +6289,8 @@
       } catch (err) {
         console.error('Error loading forms:', err);
         showToast('Erro ao carregar formulários', 'error');
+      } finally {
+        state.isLoadingForms = false;
       }
     }
 
@@ -6438,7 +6443,9 @@
       btn.innerHTML = '<div class="spinner"></div> Salvando...';
 
       try {
-        if (state.currentFormId && (typeof state.currentFormId === 'number' || typeof state.currentFormId === 'string' && state.currentFormId.length > 5)) {
+        const isUpdate = state.currentFormId && (String(state.currentFormId).length > 5 || typeof state.currentFormId === 'number');
+
+        if (isUpdate) {
           await fetchAPI(`/api/forms/${state.currentFormId}`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -6468,9 +6475,10 @@
         showToast('Formulário salvo com sucesso! 🎉', 'success');
         state.currentFormId = null;
         goToDashboard();
-        loadFormsFromAPI(); // Refresh list in background
+        setTimeout(() => loadFormsFromAPI(), 100); // Slight delay for DB consistency
       } catch (err) {
         showToast('Erro ao salvar: ' + err.message, 'error');
+        console.error('Save error:', err);
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalHtml;

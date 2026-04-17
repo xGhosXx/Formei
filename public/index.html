@@ -2686,6 +2686,23 @@
     .field-item.dragging { opacity: 0.4; }
     .field-item.drag-over { border-top: 2px solid var(--accent) !important; }
 
+    .btn-danger-sm {
+      background: var(--red);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-danger-sm:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-danger-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+
     @media (max-width: 960px) {
       .auth-hero { display: none; }
       .auth-form-side { width: 100%; min-width: auto; }
@@ -3250,6 +3267,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 <span>Lixeira</span>
               </div>
+              <span class="db-nav-badge" id="nav-trash-count" style="display:none;">0</span>
             </li>
           </ul>
 
@@ -3284,6 +3302,10 @@
               </div>
 
               <!-- Action Icons -->
+              <button class="btn-danger-sm" id="empty-trash-btn" style="display:none;" onclick="emptyTrash()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Esvaziar Lixeira
+              </button>
               <button class="db-icon-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
               </button>
@@ -5836,15 +5858,21 @@
       const statsRow = document.getElementById('stats-row');
       
       const searchQuery = document.getElementById('search-input')?.value?.toLowerCase() || '';
-      
       // Filter by status first
       let formsByStatus = [];
+      const emptyTrashBtn = document.getElementById('empty-trash-btn');
+      const dashboardTitle = document.getElementById('dashboard-main-title');
+
       if (state.currentNav === 'trash') {
         formsByStatus = state.forms.filter(f => f.status === 'trash');
+        if (emptyTrashBtn) emptyTrashBtn.style.display = formsByStatus.length > 0 ? 'inline-flex' : 'none';
+        if (dashboardTitle) dashboardTitle.textContent = 'Lixeira';
       } else {
         formsByStatus = state.forms.filter(f => f.status !== 'trash');
+        if (emptyTrashBtn) emptyTrashBtn.style.display = 'none';
+        if (dashboardTitle) dashboardTitle.textContent = 'Meus formulários';
       }
-
+      
       const filteredForms = formsByStatus.filter(f => (f.title||'').toLowerCase().includes(searchQuery));
 
       // Update stats based on active (non-trash) forms
@@ -6226,6 +6254,7 @@
         }
 
         const activeForms = state.forms.filter(f => f.status !== 'trash');
+        const trashedForms = state.forms.filter(f => f.status === 'trash');
         const totalForms = activeForms.length;
         const totalResponses = activeForms.reduce((sum, f) => sum + (state.responses[f.id]?.length || 0), 0);
         
@@ -6237,7 +6266,13 @@
         if (sv) sv.textContent = activeForms.reduce((sum, f) => sum + (f.views || 0), 0);
         
         const badge = document.getElementById('nav-forms-count');
-        if (badge) badge.textContent = `(${totalForms})`;
+        if (badge) badge.textContent = totalForms;
+
+        const trashBadge = document.getElementById('nav-trash-count');
+        if (trashBadge) {
+          trashBadge.textContent = trashedForms.length;
+          trashBadge.style.display = trashedForms.length > 0 ? 'flex' : 'none';
+        }
 
         renderDashboard();
 
@@ -6383,17 +6418,13 @@
     }
 
     // ==================== PUBLISH FORM (API) ====================
-    publishForm = async function() {
-      const user = getUser();
-      if (!user) return;
-
-      const title = document.getElementById('builder-form-title').value || 'Formulário sem título';
-      const desc = document.getElementById('canvas-form-desc').value || '';
-      const emojis = ['📋', '📝', '📊', '📎', '📌', '✏️', '📑', '🗒️'];
-      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+      const btn = document.querySelector('.btn-primary, button[onclick="publishForm()"]');
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Salvando...';
 
       try {
-        if (state.currentFormId && typeof state.currentFormId === 'number') {
+        if (state.currentFormId && (typeof state.currentFormId === 'number' || typeof state.currentFormId === 'string' && state.currentFormId.length > 5)) {
           await fetchAPI(`/api/forms/${state.currentFormId}`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -6420,12 +6451,36 @@
           });
           state.currentFormId = data.form.id;
         }
-        showToast('Formulário publicado com sucesso! 🎉', 'success');
+        showToast('Formulário salvo com sucesso! 🎉', 'success');
         state.currentFormId = null;
         await loadFormsFromAPI();
         goToDashboard();
       } catch (err) {
-        showToast('Erro ao publicar: ' + err.message, 'error');
+        showToast('Erro ao salvar: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    };
+
+    emptyTrash = async function() {
+      const confirmed = await showConfirm('Esvaziar Lixeira', 'Tem certeza que deseja excluir PERMANENTEMENTE todos os itens da lixeira? Esta ação não pode ser desfeita.', { danger: true, confirmText: 'Esvaziar agora' });
+      if (!confirmed) return;
+      
+      const btn = document.getElementById('empty-trash-btn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Esvaziando...';
+      
+      try {
+        await fetchAPI('/api/forms/trash/empty', { method: 'DELETE' });
+        showToast('Lixeira esvaziada! ✅', 'success');
+        await loadFormsFromAPI();
+      } catch (err) {
+        showToast('Erro: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
       }
     };
 

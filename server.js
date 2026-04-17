@@ -565,6 +565,28 @@ app.post('/api/forms/:id/duplicate', authMiddleware, async (req, res) => {
   res.status(201).json({ form: duplicate });
 });
 
+// Empty trash
+app.delete('/api/forms/trash/empty', authMiddleware, async (req, res) => {
+  if (!supabase) {
+    const db = loadDB();
+    const trashedForms = db.forms.filter(f => f.status === 'trash' && f.user_id === req.userId).map(f => f.id);
+    db.forms = db.forms.filter(f => !trashedForms.includes(f.id));
+    db.responses = db.responses.filter(r => !trashedForms.includes(r.form_id));
+    saveDB(db);
+    return res.json({ success: true, deleted_count: trashedForms.length });
+  }
+
+  // Supabase version: Delete all forms with status 'trash' for this user
+  const { data, error } = await supabase
+    .from('forms')
+    .delete()
+    .eq('user_id', req.userId)
+    .eq('status', 'trash');
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
 // Delete form
 app.delete('/api/forms/:id', authMiddleware, async (req, res) => {
   const id = req.params.id;

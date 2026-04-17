@@ -29,7 +29,11 @@ const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUP
 const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION;
 
 if (!supabase) {
-  console.warn('⚠️ Supabase credentials not found. Local JSON DB will be used (limited persistence on Vercel).');
+  if (isVercel) {
+    console.error('❌ CRITICAL ERROR on Vercel: SUPABASE_URL or SUPABASE_KEY missing in Environment Variables!');
+  } else {
+    console.warn('⚠️ Supabase credentials not found. Local JSON DB will be used.');
+  }
 } else {
   console.log('✅ Supabase integrated successfully.');
 }

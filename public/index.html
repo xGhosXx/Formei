@@ -3152,7 +3152,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
             <span id="register-error-text">Erro</span>
           </div>
-          <form class="auth-form" autocomplete="on" onsubmit="handleRegister(event)">
+          <form class="auth-form" method="POST" autocomplete="on" onsubmit="handleRegister(event)">
             <div class="auth-field">
               <label for="register-name">Nome completo</label>
               <input type="text" id="register-name" name="registerName" class="auth-input" placeholder="João Silva" required autocomplete="name">
@@ -3997,7 +3997,7 @@
         <div class="auth-card">
           <div class="auth-card-header"><h2>Recuperar senha</h2><p>Informe seu email para receber as instruções</p></div>
           <div id="forgot-form-section">
-            <form class="auth-form" onsubmit="handleForgotPassword(event)">
+            <form class="auth-form" method="POST" onsubmit="handleForgotPassword(event)">
               <div class="auth-field">
                 <label for="forgot-email">E-mail</label>
                 <input type="email" id="forgot-email" class="auth-input" placeholder="seu@email.com" required>
@@ -4006,7 +4006,7 @@
             </form>
           </div>
           <div id="reset-form-section" style="display:none">
-            <form class="auth-form" onsubmit="handleResetPassword(event)">
+            <form class="auth-form" method="POST" onsubmit="handleResetPassword(event)">
               <input type="hidden" id="reset-token">
               <div class="auth-field">
                 <label for="reset-new-pw">Nova senha</label>

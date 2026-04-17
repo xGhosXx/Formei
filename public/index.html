@@ -6418,6 +6418,15 @@
     }
 
     // ==================== PUBLISH FORM (API) ====================
+    publishForm = async function() {
+      const user = getUser();
+      if (!user) return;
+
+      const title = document.getElementById('builder-form-title').value || 'Formulário sem título';
+      const desc = document.getElementById('canvas-form-desc').value || '';
+      const emojis = ['📋', '📝', '📊', '📎', '📌', '✏️', '📑', '🗒️'];
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+
       const btn = document.querySelector('.btn-primary, button[onclick="publishForm()"]');
       const originalHtml = btn.innerHTML;
       btn.disabled = true;

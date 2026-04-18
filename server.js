@@ -98,7 +98,7 @@ function loadDB() {
     if (!isVercel) {
       if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
     }
-    
+
     if (!fs.existsSync(DB_PATH)) {
       const initial = { users: [], forms: [], responses: [], notifications: [], resetTokens: [], folders: [], nextId: 1 };
       if (!isVercel) fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
@@ -119,13 +119,56 @@ function saveDB(db) {
   try {
     if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
     fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function genId(db) {
   const id = db.nextId || 1;
   db.nextId = id + 1;
   return id;
+}
+
+// ==================== PLAN HELPERS ====================
+async function getUserPlanAndUsage(userId) {
+  let plan = 'free';
+  let formCount = 0;
+
+  if (supabase) {
+    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', userId).single();
+    if (profile) plan = profile.plan;
+
+    const { count } = await supabase.from('forms').select('*', { count: 'exact', head: true }).eq('user_id', userId).neq('status', 'trash');
+    formCount = count || 0;
+  } else {
+    const db = loadDB();
+    const user = db.users.find(u => String(u.id) === String(userId));
+    if (user) plan = user.plan || 'free';
+    formCount = db.forms.filter(f => String(f.user_id) === String(userId) && f.status !== 'trash').length;
+  }
+
+  return { plan, formCount };
+}
+
+async function getMonthlyResponsesCount(userId) {
+  if (supabase) {
+    // Get user's forms
+    const { data: forms } = await supabase.from('forms').select('id').eq('user_id', userId);
+    if (!forms || forms.length === 0) return 0;
+
+    const formIds = forms.map(f => f.id);
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+    const { count } = await supabase.from('responses')
+      .select('*', { count: 'exact', head: true })
+      .in('form_id', formIds)
+      .gte('submitted_at', startOfMonth);
+    return count || 0;
+  } else {
+    const db = loadDB();
+    const formIds = db.forms.filter(f => String(f.user_id) === String(userId)).map(f => f.id);
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+    return db.responses.filter(r => formIds.includes(r.form_id) && new Date(r.submitted_at).getTime() >= startOfMonth).length;
+  }
 }
 
 // ==================== AUTH MIDDLEWARE ====================
@@ -190,12 +233,12 @@ app.post('/api/auth/register', async (req, res) => {
     const token = jwt.sign({ id: authData.user.id, email }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({
       token,
-      user: { 
-        id: authData.user.id, 
-        name: profile?.name || name, 
-        email, 
-        avatar_color: profile?.avatar_color || '#7c3aed', 
-        plan: profile?.plan || 'free' 
+      user: {
+        id: authData.user.id,
+        name: profile?.name || name,
+        email,
+        avatar_color: profile?.avatar_color || '#7c3aed',
+        plan: profile?.plan || 'free'
       }
     });
   } catch (err) {
@@ -238,12 +281,12 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: authData.user.id, email: authData.user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.json({
       token,
-      user: { 
-        id: authData.user.id, 
-        name: profile?.name || authData.user.user_metadata?.name || '', 
-        email: authData.user.email, 
-        avatar_color: profile?.avatar_color || '#7c3aed', 
-        plan: profile?.plan || 'free' 
+      user: {
+        id: authData.user.id,
+        name: profile?.name || authData.user.user_metadata?.name || '',
+        email: authData.user.email,
+        avatar_color: profile?.avatar_color || '#7c3aed',
+        plan: profile?.plan || 'free'
       }
     });
   } catch (err) {
@@ -446,6 +489,16 @@ app.get('/api/forms/:id', authMiddleware, async (req, res) => {
 
 // Create form
 app.post('/api/forms', authMiddleware, async (req, res) => {
+  const { plan, formCount } = await getUserPlanAndUsage(req.userId);
+  if (plan === 'free' && formCount >= 5) {
+    return res.status(403).json({ error: 'Limite de 5 formulários atingido. Faça upgrade para o plano Pro para criar ilimitados!' });
+  }
+
+  if (plan === 'free') {
+    req.body.webhook_url = '';
+    req.body.conditional_rules = [];
+  }
+
   const { title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules, folder_id } = req.body;
 
   if (!supabase) {
@@ -491,6 +544,13 @@ app.post('/api/forms', authMiddleware, async (req, res) => {
 // Update form
 app.put('/api/forms/:id', authMiddleware, async (req, res) => {
   const id = req.params.id;
+  const { plan } = await getUserPlanAndUsage(req.userId);
+
+  if (plan === 'free') {
+    req.body.webhook_url = '';
+    req.body.conditional_rules = [];
+  }
+
   const { title, description, emoji, fields, status, theme_color, webhook_url, conditional_rules, folder_id } = req.body;
 
   if (!supabase) {
@@ -537,6 +597,11 @@ app.put('/api/forms/:id', authMiddleware, async (req, res) => {
 // Duplicate form
 app.post('/api/forms/:id/duplicate', authMiddleware, async (req, res) => {
   const id = req.params.id;
+
+  const { plan, formCount } = await getUserPlanAndUsage(req.userId);
+  if (plan === 'free' && formCount >= 5) {
+    return res.status(403).json({ error: 'Limite de 5 formulários atingido. Faça upgrade para o plano Pro para criar ilimitados!' });
+  }
 
   if (!supabase) {
     const db = loadDB();
@@ -632,7 +697,7 @@ app.post('/api/folders', authMiddleware, async (req, res) => {
   if (!supabase) {
     const db = loadDB();
     const folder = { id: genId(db), user_id: req.userId, name, created_at: new Date().toISOString() };
-    if(!db.folders) db.folders = [];
+    if (!db.folders) db.folders = [];
     db.folders.push(folder);
     saveDB(db);
     return res.status(201).json({ folder });
@@ -729,7 +794,7 @@ app.get('/api/public/forms/:id', async (req, res) => {
   if (error || !form) return res.status(404).json({ error: 'Formulário não encontrado' });
 
   // Increment views in background
-  supabase.rpc('increment_form_views', { form_id_input: id }).then(() => {});
+  supabase.rpc('increment_form_views', { form_id_input: id }).then(() => { });
 
   res.json({ form });
 });
@@ -748,7 +813,7 @@ app.post('/api/public/forms/:id/responses', async (req, res) => {
     if (!form) return res.status(404).json({ error: 'Formulário não encontrado' });
     webhookUrl = form.webhook_url;
     formTitle = form.title;
-    
+
     const response = { id: genId(db), form_id: parseInt(id), data: data || {}, submitted_at: new Date().toISOString() };
     db.responses.push(response);
     db.notifications.push({ id: genId(db), user_id: form.user_id, type: 'new_response', form_id: form.id, form_title: form.title, message: `Nova resposta no formulário "${form.title}"`, read: false, created_at: new Date().toISOString() });
@@ -779,7 +844,7 @@ app.post('/api/public/forms/:id/responses', async (req, res) => {
       data: data || {},
       submitted_at: new Date().toISOString()
     };
-    
+
     // Non-blocking trigger
     fetch(webhookUrl, {
       method: 'POST',

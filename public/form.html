@@ -475,26 +475,20 @@
 
   async function loadForm() {
     try {
-      // Increment views via RPC (ignore error if fails)
-      try {
-        await supabaseClient.rpc('increment_form_views', { form_id_input: parseInt(formId) });
-      } catch (rpcErr) {
-        console.warn('View counter error:', rpcErr);
+      // Load form data from API (which handles view counting and fetches owner plan)
+      const res = await fetch(`/api/public/forms/${formId}`);
+      if (!res.ok) {
+        throw new Error('Formulário não encontrado ou não publicado.');
       }
-
-      // Load form data
-      const { data, error } = await supabaseClient.from('forms')
-        .select('id, title, description, fields, theme_color, conditional_rules')
-        .eq('id', parseInt(formId))
-        .eq('status', 'published');
       
-      const form = data && data.length > 0 ? data[0] : null;
+      const payload = await res.json();
+      const form = payload.form;
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
+      // Hide branding if not free plan
+      if (payload.owner_plan && payload.owner_plan !== 'free') {
+        const brandingEl = document.querySelector('.branding');
+        if (brandingEl) brandingEl.style.display = 'none';
       }
-      if (!form) throw new Error('Formulário não encontrado ou não publicado.');
 
       formData = form;
       conditionalRules = form.conditional_rules || [];

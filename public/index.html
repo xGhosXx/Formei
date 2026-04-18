@@ -4118,6 +4118,18 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-premium" onclick="closeModal('modal-premium', event)">
+    <div class="modal-content modal-sm modal-pad" onclick="event.stopPropagation()" style="text-align:center;">
+      <div style="font-size:40px; margin-bottom:10px;">⭐</div>
+      <h3 style="margin-bottom:10px;">Recurso Premium</h3>
+      <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">
+        O recurso <b><span class="premium-feature-name"></span></b> está disponível apenas nos planos Pro e Business. Faça upgrade para desbloquear!
+      </p>
+      <button onclick="closeModal('modal-premium'); closeModal('modal-webhook'); upgradePlan('pro');" style="background:var(--accent);color:white;padding:12px 24px;border-radius:var(--radius-md);font-weight:600;cursor:pointer;border:none;font-family:inherit;width:100%; margin-bottom:10px;">Fazer Upgrade para o Pro</button>
+      <button class="btn-outline-sm" onclick="closeModal('modal-premium')" style="width:100%;">Agora não</button>
+    </div>
+  </div>
+
   <!-- Global Confirmation Modal -->
   <div id="confirm-modal" class="modal-overlay">
     <div class="modal-content">
@@ -4639,9 +4651,35 @@
       return { title, desc, fields };
     }
 
+    function checkPremiumFeature(featureName) {
+      const user = getUser();
+      if (!user || user.plan === 'free') {
+        const modal = document.getElementById('modal-premium');
+        if (modal) {
+          const title = modal.querySelector('.premium-feature-name');
+          if (title) title.textContent = featureName;
+          modal.classList.add('active');
+        }
+        return false;
+      }
+      return true;
+    }
+
+    function checkFormsLimit() {
+      const user = getUser();
+      if (!user || user.plan === 'free') {
+        if (state.forms && state.forms.filter(f => f.status !== 'trash').length >= 5) {
+          checkPremiumFeature('Múltiplos Formulários (Mais de 5)');
+          return false;
+        }
+      }
+      return true;
+    }
+
     // ==================== BUILDER ====================
     function goToBuilder(fromPreview) {
       if (!fromPreview) {
+        if (!state.currentFormId && !checkFormsLimit()) return;
         closeModal('create-modal');
         state.currentFormId = null;
         state.fields = [];
@@ -4665,6 +4703,9 @@
     }
 
     function switchBuilderTab(el, tab) {
+      if (tab === 'logic' && !checkPremiumFeature('Lógica Condicional')) {
+        return; // do not focus or open
+      }
       document.querySelectorAll('.builder-tab').forEach(t => t.classList.remove('active'));
       el.classList.add('active');
       state.activeBuilderTab = tab;
@@ -5840,6 +5881,7 @@
 
     // ==================== WEBHOOK CONFIG ====================
     function openWebhookConfig() {
+      if (!checkPremiumFeature('Webhooks & Acesso a API')) return;
       const input = document.getElementById('webhook-url-input');
       if (input) input.value = state.webhookUrl || '';
       document.getElementById('modal-webhook').classList.add('active');
@@ -5864,6 +5906,7 @@
     let duplicateForm = async function(formId, e) {};
     let restoreForm = async function(formId) {};
     let exportCSV = async function(formId) {};
+    let openLogicConfig = async function() {};
 
     function renderDashboard() {
       const gridContainer = document.getElementById('forms-grid-container');
@@ -6701,6 +6744,7 @@
 
     // ==================== CSV EXPORT (API) ====================
     exportCSV = async function(formId) {
+      if (!checkPremiumFeature('Exportação de Dados em CSV')) return;
       if (!formId) return showToast('ID do formulário inválido', 'error');
       try {
         const { form } = await fetchAPI(`/api/forms/${formId}`);

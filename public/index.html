@@ -6762,17 +6762,41 @@
       showToast('Para excluir a conta permanentemente, entre em contato com o suporte.', 'info');
     };
 
-    // ==================== PLANS (Mock / API) ====================
+    // ==================== PLANS (AbacatePay) ====================
     upgradePlan = async function(plan) {
+      // Find the button that was clicked
+      const buttons = document.querySelectorAll('#modal-plans button[onclick*="upgradePlan"]');
+      let clickedBtn = null;
+      buttons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(`'${plan}'`)) clickedBtn = btn;
+      });
+
+      const originalText = clickedBtn ? clickedBtn.innerHTML : '';
+      if (clickedBtn) {
+        clickedBtn.disabled = true;
+        clickedBtn.innerHTML = '<div class="spinner"></div> Gerando PIX...';
+      }
+
       try {
-        const localUser = getUser();
-        localUser.plan = plan;
-        setUser(localUser);
-        updateUserUI(localUser);
-        showToast(`Upgrade para ${plan === 'pro' ? 'Pro' : 'Business'} realizado! 🚀`, 'success');
-        closeModal('modal-plans');
+        const data = await fetchAPI('/api/payments/checkout', {
+          method: 'POST',
+          body: JSON.stringify({ plan })
+        });
+
+        if (data.checkoutUrl) {
+          showToast('Redirecionando para pagamento via PIX... 💸', 'info');
+          setTimeout(() => {
+            window.location.href = data.checkoutUrl;
+          }, 800);
+        } else {
+          throw new Error('URL de checkout não recebida');
+        }
       } catch (err) {
-        showToast('Erro: ' + err.message, 'error');
+        showToast('Erro ao criar pagamento: ' + err.message, 'error');
+        if (clickedBtn) {
+          clickedBtn.disabled = false;
+          clickedBtn.innerHTML = originalText;
+        }
       }
     };
 
@@ -6872,6 +6896,31 @@
         document.getElementById('reset-form-section').style.display = 'block';
         document.getElementById('reset-token').value = recoveryToken;
         return;
+      }
+
+      // Handle payment return from AbacatePay
+      const paymentStatus = urlParams.get('payment');
+      const paymentPlan = urlParams.get('plan');
+      if (paymentStatus) {
+        // Clean URL without reloading
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+
+        if (paymentStatus === 'success' && paymentPlan) {
+          // Update local user plan
+          const localUser = getUser();
+          if (localUser) {
+            localUser.plan = paymentPlan;
+            setUser(localUser);
+          }
+          setTimeout(() => {
+            showToast(`🎉 Pagamento confirmado! Seu plano agora é ${paymentPlan === 'pro' ? 'Pro' : 'Business'}!`, 'success');
+          }, 1000);
+        } else if (paymentStatus === 'cancelled') {
+          setTimeout(() => {
+            showToast('Pagamento cancelado. Você pode tentar novamente quando quiser.', 'info');
+          }, 1000);
+        }
       }
 
       const token = getToken();

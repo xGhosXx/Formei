@@ -947,6 +947,211 @@ app.post('/api/plans/upgrade', authMiddleware, async (req, res) => {
   res.json({ success: true, user: { ...profile, email: req.userEmail } });
 });
 
+// ==================== ABACATEPAY INTEGRATION ====================
+const ABACATEPAY_API_KEY = process.env.ABACATEPAY_API_KEY || '';
+const ABACATEPAY_WEBHOOK_SECRET = process.env.ABACATEPAY_WEBHOOK_SECRET || 'formei_webhook_secret_2024';
+const ABACATEPAY_BASE = 'https://api.abacatepay.com/v2';
+
+// Plan config: prices in centavos
+const PLAN_CONFIG = {
+  pro: { name: 'Formei Pro', price: 2900, externalId: 'formei_pro' },
+  business: { name: 'Formei Business', price: 7900, externalId: 'formei_business' }
+};
+
+// Helper: call AbacatePay API
+async function abacateAPI(method, endpoint, body = null) {
+  if (!ABACATEPAY_API_KEY) throw new Error('ABACATEPAY_API_KEY não configurada');
+  const options = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) options.body = JSON.stringify(body);
+
+  const url = `${ABACATEPAY_BASE}${endpoint}`;
+  const res = await fetch(url, options);
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || 'Erro na API AbacatePay');
+  return data.data;
+}
+
+// Helper: find or create product in AbacatePay
+async function getOrCreateProduct(planKey) {
+  const config = PLAN_CONFIG[planKey];
+  if (!config) throw new Error('Plano inválido');
+
+  // Try to find existing product by listing
+  try {
+    const products = await abacateAPI('GET', '/products/list');
+    const existing = (products || []).find(p => p.externalId === config.externalId);
+    if (existing) return existing.id;
+  } catch (e) {
+    console.warn('Could not list products:', e.message);
+  }
+
+  // Create new product
+  const product = await abacateAPI('POST', '/products/create', {
+    externalId: config.externalId,
+    name: config.name,
+    price: config.price,
+    currency: 'BRL',
+    description: `Assinatura mensal ${config.name}`
+  });
+
+  return product.id;
+}
+
+// Create checkout for plan upgrade
+app.post('/api/payments/checkout', authMiddleware, async (req, res) => {
+  try {
+    const { plan } = req.body;
+    if (!['pro', 'business'].includes(plan)) {
+      return res.status(400).json({ error: 'Plano inválido' });
+    }
+
+    if (!ABACATEPAY_API_KEY) {
+      return res.status(500).json({ error: 'Pagamento não configurado. Configure a ABACATEPAY_API_KEY.' });
+    }
+
+    // Determine base URL from request
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    const baseUrl = `${protocol}://${host}`;
+
+    // Get or create the product in AbacatePay
+    const productId = await getOrCreateProduct(plan);
+
+    // Create or find customer by email
+    let customerId = null;
+    try {
+      const customer = await abacateAPI('POST', '/customers/create', {
+        email: req.userEmail,
+        name: req.userEmail.split('@')[0],
+        metadata: { formei_user_id: String(req.userId) }
+      });
+      customerId = customer.id;
+    } catch (e) {
+      console.warn('Customer creation warning:', e.message);
+    }
+
+    // Create the checkout
+    const checkoutBody = {
+      items: [{ id: productId, quantity: 1 }],
+      methods: ['PIX'],
+      returnUrl: `${baseUrl}/?payment=cancelled`,
+      completionUrl: `${baseUrl}/?payment=success&plan=${plan}`,
+      metadata: {
+        formei_user_id: String(req.userId),
+        formei_plan: plan
+      }
+    };
+    if (customerId) checkoutBody.customerId = customerId;
+
+    const checkout = await abacateAPI('POST', '/checkouts/create', checkoutBody);
+
+    // Save checkout reference in Supabase for tracking
+    if (supabase) {
+      await supabase.from('payments').upsert({
+        user_id: req.userId,
+        checkout_id: checkout.id,
+        plan: plan,
+        amount: PLAN_CONFIG[plan].price,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      }).select();
+    }
+
+    res.json({ success: true, checkoutUrl: checkout.url, checkoutId: checkout.id });
+  } catch (err) {
+    console.error('Checkout creation error:', err);
+    res.status(500).json({ error: err.message || 'Erro ao criar checkout' });
+  }
+});
+
+// Webhook: receive payment notifications from AbacatePay
+app.post('/api/webhooks/abacatepay', async (req, res) => {
+  try {
+    // Validate webhook secret
+    const secret = req.query.webhookSecret;
+    if (secret !== ABACATEPAY_WEBHOOK_SECRET) {
+      console.warn('Invalid webhook secret received');
+      return res.status(401).json({ error: 'Invalid secret' });
+    }
+
+    const { event, data, devMode } = req.body;
+    console.log(`[AbacatePay Webhook] Event: ${event}, DevMode: ${devMode}, ID: ${data?.id}`);
+
+    if (event === 'billing.paid' || event === 'checkout.completed') {
+      const metadata = data?.metadata || {};
+      const userId = metadata.formei_user_id;
+      const plan = metadata.formei_plan;
+
+      if (userId && plan && ['pro', 'business'].includes(plan)) {
+        // Update user plan in database
+        if (supabase) {
+          await supabase.from('profiles').update({ plan }).eq('id', userId);
+
+          // Update payment record
+          if (data?.id) {
+            await supabase.from('payments').update({
+              status: 'paid',
+              paid_at: new Date().toISOString()
+            }).eq('checkout_id', data.id);
+          }
+        } else {
+          const db = loadDB();
+          const user = db.users.find(u => String(u.id) === String(userId));
+          if (user) {
+            user.plan = plan;
+            saveDB(db);
+          }
+        }
+        console.log(`[AbacatePay] ✅ User ${userId} upgraded to ${plan}`);
+      } else {
+        console.warn('[AbacatePay] Webhook received but missing metadata:', metadata);
+      }
+    }
+
+    res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('Webhook processing error:', err);
+    res.status(200).json({ received: true }); // Always return 200 to avoid retries
+  }
+});
+
+// Check payment status
+app.get('/api/payments/status', authMiddleware, async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.json({ plan: 'free', hasPending: false });
+    }
+
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('user_id', req.userId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const latest = payments && payments[0];
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('plan')
+      .eq('id', req.userId)
+      .single();
+
+    res.json({
+      plan: profile?.plan || 'free',
+      hasPending: latest?.status === 'pending',
+      lastPayment: latest || null
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ==================== STATS ====================
 app.get('/api/stats', authMiddleware, async (req, res) => {
   if (!supabase) {

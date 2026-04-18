@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -1105,7 +1106,7 @@ app.post('/api/payments/checkout', authMiddleware, async (req, res) => {
     // Create the subscription checkout
     const checkoutBody = {
       items: [{ id: productId, quantity: 1 }],
-      methods: ['PIX', 'CREDIT_CARD', 'BOLETO'],
+      methods: ['PIX'],
       returnUrl: `${baseUrl}/?payment=cancelled`,
       completionUrl: `${baseUrl}/?payment=success&plan=${plan}`,
       metadata: {
@@ -1136,7 +1137,72 @@ app.post('/api/payments/checkout', authMiddleware, async (req, res) => {
   }
 });
 
-// Webhook: receive payment notifications from AbacatePay
+// NEW: Transparent PIX Checkout
+app.post('/api/payments/transparent/pix', authMiddleware, async (req, res) => {
+  try {
+    const { plan } = req.body;
+    if (!PLAN_CONFIG[plan]) return res.status(400).json({ error: 'Plano inválido' });
+
+    console.log(`[AbacatePay] Creating transparent PIX for user ${req.userId}, plan ${plan}`);
+
+    // Fetch user name for better registration
+    let userName = 'Usuário Formei';
+    if (supabase) {
+      const { data: profile } = await supabase.from('profiles').select('name').eq('id', req.userId).single();
+      if (profile && profile.name) userName = profile.name;
+    } else {
+      const db = loadDB();
+      const user = db.users.find(u => u.id === req.userId);
+      if (user) userName = user.name;
+    }
+
+    // Create the billing (not a subscription directly, but the first payment)
+    const transparentBody = {
+      amount: PLAN_CONFIG[plan].price,
+      method: 'PIX', // Correct singular field
+      customer: {
+        name: userName,
+        email: req.userEmail,
+        taxId: '00000000000' // Placeholder if common taxId is needed
+      },
+      products: [
+        {
+          externalId: PLAN_CONFIG[plan].externalId,
+          name: PLAN_CONFIG[plan].name,
+          quantity: 1,
+          price: PLAN_CONFIG[plan].price
+        }
+      ],
+      returnUrl: `${process.env.BASE_URL || 'http://localhost:3000'}/?payment=success`,
+      completionUrl: `${process.env.BASE_URL || 'http://localhost:3000'}/?payment=success`,
+      metadata: {
+        formei_user_id: String(req.userId),
+        formei_plan: plan,
+        transparent: 'true'
+      }
+    };
+
+    console.log(`[AbacatePay] Generating transparent PIX with refined schema for user ${req.userId}`);
+    const checkout = await abacateAPI('POST', '/transparents/create', transparentBody);
+    
+    // The response for /transparents/create in V2 usually has brCode and brCodeBase64
+    if (!checkout.brCode && checkout.id) {
+       console.log('[AbacatePay] WARNING: brCode missing in direct response, check object structure.');
+    }
+
+    res.json({ 
+      success: true, 
+      id: checkout.id,
+      pixCode: checkout.brCode,
+      pixQr: checkout.brCodeBase64
+    });
+  } catch (err) {
+    console.error('Checkout creation error:', err);
+    res.status(500).json({ error: err.message || 'Erro ao criar checkout' });
+  }
+});
+
+// Update Webhook to be more robust
 app.post('/api/webhooks/abacatepay', async (req, res) => {
   try {
     // Validate webhook secret
@@ -1153,6 +1219,9 @@ app.post('/api/webhooks/abacatepay', async (req, res) => {
       const metadata = data?.metadata || {};
       const userId = metadata.formei_user_id;
       const plan = metadata.formei_plan;
+      const isTransparent = metadata.transparent === 'true';
+
+      console.log(`[AbacatePay Webhook] Processing Plan Update: User ${userId}, Plan ${plan}, Transparent: ${isTransparent}`);
 
       if (userId && plan && ['pro', 'business'].includes(plan)) {
         // Update user plan in database

@@ -1062,7 +1062,8 @@ async function getOrCreateProduct(planKey) {
     name: config.name,
     price: config.price,
     currency: 'BRL',
-    description: `Assinatura mensal ${config.name}`
+    description: `Assinatura mensal ${config.name}`,
+    cycle: 'MONTHLY'
   });
 
   return product.id;
@@ -1101,10 +1102,10 @@ app.post('/api/payments/checkout', authMiddleware, async (req, res) => {
       console.warn('Customer creation warning:', e.message);
     }
 
-    // Create the checkout
+    // Create the subscription checkout
     const checkoutBody = {
       items: [{ id: productId, quantity: 1 }],
-      methods: ['PIX'],
+      methods: ['PIX', 'CREDIT_CARD', 'BOLETO'],
       returnUrl: `${baseUrl}/?payment=cancelled`,
       completionUrl: `${baseUrl}/?payment=success&plan=${plan}`,
       metadata: {
@@ -1114,7 +1115,7 @@ app.post('/api/payments/checkout', authMiddleware, async (req, res) => {
     };
     if (customerId) checkoutBody.customerId = customerId;
 
-    const checkout = await abacateAPI('POST', '/checkouts/create', checkoutBody);
+    const checkout = await abacateAPI('POST', '/subscriptions/create', checkoutBody);
 
     // Save checkout reference in Supabase for tracking
     if (supabase) {
@@ -1148,7 +1149,7 @@ app.post('/api/webhooks/abacatepay', async (req, res) => {
     const { event, data, devMode } = req.body;
     console.log(`[AbacatePay Webhook] Event: ${event}, DevMode: ${devMode}, ID: ${data?.id}`);
 
-    if (event === 'billing.paid' || event === 'checkout.completed') {
+    if (event === 'billing.paid' || event === 'checkout.completed' || event === 'subscription.activated' || event === 'subscription.paid') {
       const metadata = data?.metadata || {};
       const userId = metadata.formei_user_id;
       const plan = metadata.formei_plan;
